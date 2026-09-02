@@ -122,16 +122,6 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
-  register: (email: string, password: string, displayName: string) =>
-    request<AdminSession>('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify({
-        email,
-        password,
-        displayName: displayName || undefined,
-        role: 'customer',
-      }),
-    }),
 }
 
 export const usersApi = {
