@@ -1,0 +1,12 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "pickup-runner",
+	"compatibility_date": "2026-09-04",
+	// Static-asset Worker: no `main`, so Cloudflare serves dist/ directly.
+	// "single-page-application" rewrites unknown paths to index.html so the
+	// client-side TanStack Router routes (/order, /drivers, /admin, ...) resolve.
+	"assets": {
+		"directory": "dist",
+		"not_found_handling": "single-page-application"
+	}
+}

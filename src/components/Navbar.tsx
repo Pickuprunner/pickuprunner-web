@@ -10,6 +10,7 @@ export function Navbar() {
     { label: 'Home', to: '/' },
     { label: 'Place Order', to: '/order' },
     { label: 'Drive With Us', to: '/drivers' },
+    { label: 'Contact Us', to: '/contact' },
   ]
   const isActive = (to: string) => location.pathname === to
 
@@ -40,16 +41,6 @@ export function Navbar() {
           ))}
         </nav>
 
-        <div className="hidden md:flex items-center gap-3">
-          <Link
-            to="/order"
-            className="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
-            style={{ background: '#F5C400', color: '#0A0A0F' }}
-          >
-            Order Now
-          </Link>
-        </div>
-
         <button
           className="md:hidden p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           onClick={() => setMobileOpen(!mobileOpen)}
@@ -72,15 +63,6 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
-
-          <Link
-            to="/order"
-            onClick={() => setMobileOpen(false)}
-            className="px-4 py-3 rounded-lg text-sm font-semibold text-center mt-2"
-            style={{ background: '#F5C400', color: '#0A0A0F' }}
-          >
-            Order Now
-          </Link>
         </div>
       )}
     </header>

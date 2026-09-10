@@ -8,6 +8,8 @@ import { PrivacyPage } from './pages/PrivacyPage'
 import { TermsPage } from './pages/TermsPage'
 import { AdminPage } from './pages/AdminPage'
 import { DeleteProfilePage } from './pages/DeleteProfilePage'
+import { ContactPage } from './pages/ContactPage'
+import { NotFoundPage } from './pages/NotFoundPage'
 
 declare module '@tanstack/react-router' {
   interface Register { router: typeof router }
@@ -61,15 +63,24 @@ const deleteProfileRoute = createRoute({
   component: DeleteProfilePage,
 })
 
+const contactRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/contact',
+  component: ContactPage,
+})
+
 const adminRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/admin',
   component: AdminPage,
 })
 
-const routeTree = rootRoute.addChildren([indexRoute, orderRoute, driversRoute, privacyRoute, termsRoute, deleteProfileRoute, adminRoute])
+const routeTree = rootRoute.addChildren([indexRoute, orderRoute, driversRoute, privacyRoute, termsRoute, deleteProfileRoute, contactRoute, adminRoute])
 
-const router = createRouter({ routeTree })
+const router = createRouter({
+  routeTree,
+  defaultNotFoundComponent: NotFoundPage,
+})
 
 export default function App() {
   return <RouterProvider router={router} />

@@ -48,7 +48,7 @@ export function Footer() {
             <Link to="/privacy" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Privacy</Link>
             <Link to="/terms" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Terms</Link>
             {/* <Link to="/delete-profile" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Delete Account</Link> */}
-            <a href="mailto:pickuprunner13@gmail.com" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Contact</a>
+            <Link to="/contact" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Contact</Link>
           </div>
         </div>
       </div>

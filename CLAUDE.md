@@ -1,0 +1,112 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project
+
+PickupRunner — the public marketing site plus an internal admin console for a local grocery/pharmacy
+delivery service. React 19 SPA built with Vite, deployed to Cloudflare Workers via `vinext`.
+The backend is a separate service; this repo only talks to it over HTTP.
+
+## Commands
+
+```bash
+npm run dev              # Vite dev server on :3000 (strictPort, host exposed)
+npm run build            # vite build -> dist/
+npm run preview          # serve the production build
+
+npm run lint:types       # tsc --noEmit — the type check that actually works
+npm run lint:css         # stylelint --fix on src/**/*.css
+
+npm run preview:cf       # build, then serve through wrangler dev (local Workers runtime)
+npm run deploy           # vite build && wrangler deploy
+```
+
+There are no tests and no test runner.
+
+**Broken scripts:** `lint:js` invokes eslint, which is not a dependency and has no config file;
+`lint` chains the sub-scripts through `bun run`, and bun is not installed. Run `lint:types` and
+`lint:css` directly instead of `npm run lint`.
+
+## Architecture
+
+**Routing is code-based, not file-based.** `src/App.tsx` builds the entire TanStack Router route
+tree by hand — `createRootRoute` supplies the Navbar/Outlet/Footer chrome, and every page gets an
+explicit `createRoute`. `src/pages/` is just a folder of components; adding a file there does
+nothing until it is wired into the route tree in `App.tsx`. `src/main.tsx` mounts the app inside a
+`QueryClientProvider` and force-enables dark mode with
+`document.documentElement.classList.add('dark')`.
+
+**All server access goes through `src/lib/api.ts`.** Base URL is `VITE_API_URL` (default
+`http://localhost:8080`). That module owns:
+
+- a module-level token store (`session`) — not React state, not context;
+- `request<T>()`, which unwraps the backend's `{ data, message, error, errors }` envelope and
+  returns `body.data`, throwing `Error(errors.join('. ') || error || message)` on non-2xx;
+- automatic access-token refresh: passing a `token` argument marks a call as authenticated (the
+  token actually sent is read from the store), and a 401 triggers a single-flight
+  `POST /auth/refresh` and one retry before `onExpired` fires.
+
+Endpoint groups are exported as small objects — `authApi`, `usersApi`, `adminApi`,
+`accreditationsApi`, `driverReviewApi`, `applicationsApi`, `contactApi` — alongside the domain
+types (`AdminOrder`, `AdminDriver`, `Accreditation`, order/payment/accreditation status unions).
+New endpoints belong here, following the same shape.
+
+**Admin auth lives entirely in `src/pages/AdminPage.tsx`.** It persists the session to
+`sessionStorage` under `pickuprunner_admin_session`, rehydrates it into `apiSession` on mount, and
+registers `apiSession.onRefreshed` / `onExpired` to keep storage in sync and log out on expiry.
+Panels (`src/components/AdminPanels.tsx`) receive the token as a prop and call `adminApi` directly.
+
+**Data fetching is hand-rolled.** Despite being installed, `@tanstack/react-query`,
+`react-hook-form`, `zod`, `react-hot-toast`, `framer-motion`, `recharts`, `@dnd-kit`, and
+`@react-three/*` are not imported anywhere in `src/`. Pages use `useState` plus async submit
+handlers with local `loading`/`error` state. Match that pattern unless deliberately introducing a
+library.
+
+## Styling
+
+Tailwind 3 with a design-token indirection: `src/index.css` defines HSL triples as CSS custom
+properties (`--primary`, `--sidebar`, `--chart-1`, radii, shadows, fonts), and
+`tailwind.config.cjs` maps them to utilities as `hsl(var(--token))`. Change a color in `index.css`,
+not in the Tailwind config.
+
+`darkMode: ["class"]` with the `dark` class applied unconditionally at boot, so the `:root` light
+palette is currently unreachable. Marketing pages also hardcode inline `style` colors — brand blue
+`#0066FF`, brand yellow `#F5C400` — which bypass the token system entirely.
+
+The classes `pr-glow-blue`, `pr-glow-yellow`, `pr-grid-bg`, and `pr-text-gradient` are used in JSX
+but defined nowhere; they are currently no-ops.
+
+## Dead scaffolding
+
+Leftovers from the Vite starter and an abandoned sidebar layout, none of them reachable from
+`main.tsx`: `src/main.ts`, `src/counter.ts`, `src/style.css`, `src/Shell.tsx`,
+`src/layouts/shared-app-layout.tsx`, `src/components/AppSidebarShell.tsx`.
+
+## Cloudflare deployment
+
+Deployed as a **static-asset Worker**: `wrangler.jsonc` declares no `main`, so Cloudflare serves
+`dist/` directly with no worker script. `not_found_handling: "single-page-application"` rewrites
+unknown paths to `index.html`, which is what makes the client-side TanStack Router routes
+(`/order`, `/drivers`, `/admin`, ...) resolve on a hard refresh — without it every path but `/`
+404s.
+
+`npm run deploy` builds and ships in one step. There are no bindings; if you add KV/R2/etc. you
+will also need a `main` worker entry to use them.
+
+**Do not add a `public/_redirects` file.** The Pages-style SPA rule `/*  /index.html  200` is
+rejected by the Workers assets API as an infinite loop (`code: 100324`) — Workers already strips
+`/index` and `.html`, so the rewrite re-matches its own pattern. `not_found_handling` handles the
+SPA fallback natively; `_redirects` is redundant here.
+
+**Do not reintroduce `vinext`.** It was tried and removed (2026-09-04): vinext is a
+Next.js-compatible framework, it reads `src/pages/` as a Next.js pages directory, and because those
+files export named components rather than defaults it builds zero routes and never bundles
+`index.html` / `src/main.tsx`. Deploying that output yields an empty site. Serving this SPA through
+vinext would require migrating routing to Next.js file conventions.
+
+The `@` alias resolves to `./src` (set in both `vite.config.ts` and `tsconfig.json`), though most
+existing imports use relative paths. The Vite config is ESM, so use `import.meta.dirname` there,
+never `__dirname`.
+
+TypeScript runs with `strict: false` and `strictNullChecks: true`.
