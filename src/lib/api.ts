@@ -8,6 +8,7 @@ export interface AdminUser {
   email: string
   displayName: string
   phone: string | null
+  photoUrl?: string | null
   role: Role
   status: AccountStatus
   createdAt: string
@@ -78,8 +79,9 @@ async function refreshAccessToken(): Promise<string | null> {
   return refreshing
 }
 
-async function request<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
-  const send = (bearer?: string) =>
+/** Send a request, refreshing the access token once on 401. Returns the parsed body. */
+async function send<B>(path: string, options: RequestInit = {}, token?: string): Promise<B> {
+  const go = (bearer?: string) =>
     fetch(API_URL + path, {
       ...options,
       headers: {
@@ -90,20 +92,20 @@ async function request<T>(path: string, options: RequestInit = {}, token?: strin
     })
 
   const authed = Boolean(token)
-  let response = await send(authed ? session.accessToken() ?? token : undefined)
+  let response = await go(authed ? session.accessToken() ?? token : undefined)
 
   if (response.status === 401 && authed) {
     const fresh = await refreshAccessToken()
 
     if (fresh) {
-      response = await send(fresh)
+      response = await go(fresh)
       if (response.status === 401) expiredHandler?.()
     } else {
       expiredHandler?.()
     }
   }
 
-  const body = await response.json().catch(() => ({})) as ApiResponse<T>
+  const body = await response.json().catch(() => ({})) as ApiResponse<unknown>
 
   if (!response.ok) {
     const detail = body.errors?.length
@@ -113,6 +115,12 @@ async function request<T>(path: string, options: RequestInit = {}, token?: strin
     throw new Error(detail || 'Request failed')
   }
 
+  return body as B
+}
+
+/** The usual case: the backend wraps the payload as `{ data }`. */
+async function request<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
+  const body = await send<ApiResponse<T>>(path, options, token)
   return body.data
 }
 
@@ -128,6 +136,12 @@ export const usersApi = {
   list: (token: string, role?: Role) =>
     request<{ users: AdminUser[] }>(
       role ? '/users?role=' + role : '/users',
+      {},
+      token,
+    ),
+  get: (token: string, userId: string) =>
+    request<{ user: AdminAccount }>(
+      '/users/' + encodeURIComponent(userId),
       {},
       token,
     ),
@@ -261,7 +275,9 @@ export interface OrderParty {
   email: string
   displayName: string | null
   phone: string | null
+  photoUrl?: string | null
   status: AccountStatus
+  deletedAt?: string | null
 }
 
 export interface AdminOrder {
@@ -295,6 +311,7 @@ export interface AdminCustomer {
   email: string
   displayName: string | null
   phone: string | null
+  photoUrl?: string | null
   status: AccountStatus
   emailVerified: boolean
   createdAt: string
@@ -308,6 +325,8 @@ export interface AdminDriver {
   email: string
   displayName: string | null
   phone: string | null
+  photoUrl?: string | null
+  isAvailable?: boolean
   status: AccountStatus
   createdAt: string
   lastSignIn: string | null
@@ -338,13 +357,148 @@ const toQuery = (params: Record<string, string | number | undefined>) => {
   return suffix ? '?' + suffix : ''
 }
 
+/** A full account row as the admin detail endpoints return it (password stripped). */
+export interface AdminAccount {
+  id: string
+  email: string | null
+  displayName: string | null
+  phone: string | null
+  photoUrl: string | null
+  role: Role
+  status: AccountStatus
+  isAvailable: boolean
+  emailVerified: boolean
+  stripeAccountId: string | null
+  stripeAccountMode: 'live' | 'test' | null
+  lastSignIn: string | null
+  createdAt: string
+  updatedAt: string
+  metadata?: Record<string, unknown> | null
+  /** Set when the account was deleted (it's then anonymised). */
+  deletedAt?: string | null
+}
+
+/** GET /admin/orders/:id — the order row plus both accounts in full. */
+export interface AdminOrderFull extends Omit<AdminOrder, 'items' | 'earnings' | 'driver' | 'customer'> {
+  items: unknown
+  customerId: string | null
+  cityId: string | null
+  storeId: string | null
+  orderScope: string | null
+  customerSessionId: string | null
+  pickupLat: number | string | null
+  pickupLng: number | string | null
+  ageVerified: boolean | null
+  ageVerifiedAt: string | null
+  deliveryNotifiedAt: string | null
+  stripeCheckoutSessionId: string | null
+  stripePaymentIntentId: string | null
+  platformFeeCents: number | null
+  driverStripeAccountId: string | null
+  driverTransferId: string | null
+  driverEarningsCents: number | null
+  updatedAt: string
+  earnings: {
+    payoutCents: number | null
+    mileageCents: number | null
+    tipCents: number | null
+    platformCents?: number | null
+  }
+}
+
+export interface AdminOrderDetail {
+  order: AdminOrderFull
+  driver: AdminAccount | null
+  customer: AdminAccount | null
+}
+
+/** The compact order rows on the customer and driver screens. */
+export interface AdminOrderSummary {
+  id: string
+  ref: string
+  status: OrderStatus
+  paymentStatus: PaymentStatus
+  amountCents: number | null
+  deliveryAddress: string | null
+  driverName: string | null
+  customerName: string | null
+  createdAt: string
+  deliveredAt: string | null
+  settled: boolean
+}
+
+export interface AdminCustomerDetail {
+  customer: AdminAccount
+  stats: {
+    orders: { total: number; delivered: number; cancelled: number; active: number }
+    totalSpentCents: number
+    totalTipsCents: number
+    firstOrderAt: string | null
+    lastOrderAt: string | null
+  }
+  recentOrders: AdminOrderSummary[]
+}
+
+export interface AdminDriverDetail {
+  driver: AdminAccount
+  accreditation: AccreditationProfile | null
+  eligibility: { eligible: boolean; code: string; reason?: string }
+  missing: string[] | null
+  payouts: {
+    stripeAccountId: string | null
+    stripeAccountMode: string | null
+    canBePaid: boolean
+    unsettledDeliveries: number
+  }
+  stats: {
+    orders: { total: number; delivered: number; cancelled: number; active: number }
+    totalEarnedCents: number
+    /** Paid out through Stripe so far (same as totalEarnedCents). */
+    paidOutCents?: number
+    /** Delivered but not yet paid out. */
+    owedCents?: number
+    lastDeliveryAt: string | null
+  }
+  recentOrders: AdminOrderSummary[]
+  /** Added with the admin detail screens; absent on an older backend. */
+  presence?: DriverPresence
+}
+
+export interface DriverPresence {
+  available: boolean
+  lat: number | null
+  lng: number | null
+  locationAt: string | null
+  locationAgeSeconds: number | null
+  locationFresh: boolean
+  reachable: boolean
+  lastSeenAt: string | null
+  currentOrderId: string | null
+}
+
+export type AdminOrderQuery = {
+  status?: string
+  search?: string
+  active?: string
+  customerId?: string
+  driverUserId?: string
+  limit?: number
+  page?: number
+}
+
 export const adminApi = {
-  orders: (token: string, params: { status?: string; search?: string; active?: string; limit?: number } = {}) =>
+  orders: (token: string, params: AdminOrderQuery = {}) =>
     request<Pagination & { orders: AdminOrder[] }>(
       '/admin/orders' + toQuery(params),
       {},
       token,
     ),
+  order: (token: string, id: string) =>
+    request<AdminOrderDetail>('/admin/orders/' + encodeURIComponent(id), {}, token),
+  customer: (token: string, id: string) =>
+    request<AdminCustomerDetail>('/admin/customers/' + encodeURIComponent(id), {}, token),
+  driver: (token: string, id: string) =>
+    request<AdminDriverDetail>('/admin/drivers/' + encodeURIComponent(id), {}, token),
   customers: (token: string, params: { status?: string; search?: string; limit?: number } = {}) =>
     request<Pagination & { customers: AdminCustomer[] }>(
       '/admin/customers' + toQuery(params),
@@ -354,6 +508,48 @@ export const adminApi = {
   drivers: (token: string, params: { status?: string; search?: string; accreditationStatus?: string; limit?: number } = {}) =>
     request<Pagination & { drivers: AdminDriver[] }>(
       '/admin/drivers' + toQuery(params),
+      {},
+      token,
+    ),
+}
+
+export const deliveryApi = {
+  /** A short-lived signed link to an order's proof-of-delivery photo (private bucket). */
+  photo: (token: string, orderId: string) =>
+    // This endpoint answers without the usual { data } envelope.
+    send<{ orderId: string; url: string; expiresInSeconds: number }>(
+      '/delivery-photo/' + encodeURIComponent(orderId),
+      {},
+      token,
+    ),
+}
+
+export interface ChatMessage {
+  id: string
+  orderId: string
+  senderRole: 'customer' | 'driver' | 'admin'
+  kind: 'text' | 'system'
+  body: string
+  statusEvent: string | null
+  readAt: string | null
+  createdAt: string
+  isSystem: boolean
+}
+
+export interface ChatPage {
+  orderId: string
+  chat: { open: boolean; orderStatus: OrderStatus; closedReason: string | null }
+  messages: ChatMessage[]
+  oldestCursor: string | null
+  hasOlder: boolean
+}
+
+export const chatApi = {
+  /** Read-only for the admin screens: the newest page, or the one before `before`. */
+  messages: (token: string, orderId: string, before?: string) =>
+    request<ChatPage>(
+      '/orders/' + encodeURIComponent(orderId) + '/messages' +
+        toQuery({ limit: 50, before }),
       {},
       token,
     ),
@@ -393,4 +589,93 @@ export const accreditationsApi = {
       token,
     )
   },
+  get: (token: string, userId: string) =>
+    request<AccreditationDetail>(
+      '/admin/accreditations/' + encodeURIComponent(userId),
+      {},
+      token,
+    ),
+  /**
+   * Decide one or more items. The overall status is worked out by the server
+   * from the three items (any rejected → rejected, all approved → approved,
+   * otherwise under review), so it's never sent directly here.
+   */
+  review: (token: string, userId: string, decision: ItemDecision) =>
+    request<{ profile: AccreditationProfile }>(
+      '/admin/accreditations/' + encodeURIComponent(userId),
+      { method: 'PATCH', body: JSON.stringify(decision) },
+      token,
+    ),
+  /** A short-lived signed link to one uploaded document. */
+  document: (token: string, userId: string, type: DriverDocumentType) =>
+    request<{ type: DriverDocumentType; url: string; expiresInSeconds: number }>(
+      '/driver/accreditation/documents/' + type + '?userId=' + encodeURIComponent(userId),
+      {},
+      token,
+    ),
+}
+
+export type DriverDocumentType = 'license_front' | 'license_back' | 'insurance_card'
+
+export interface ItemDecision {
+  licenseStatus?: ReviewStatus
+  insuranceStatus?: ReviewStatus
+  backgroundStatus?: BackgroundStatus
+  /** Shown to the driver. Kept by the server while the profile stays rejected. */
+  rejectionReason?: string
+}
+
+/** Every column of the driver profile the API will show (document paths and SSN stay server-side). */
+export interface AccreditationProfile {
+  userId: string
+  legalName: string | null
+  dateOfBirth: string | null
+  streetAddress: string | null
+  aptSuite: string | null
+  city: string | null
+  state: string | null
+  postalCode: string | null
+  serviceArea: string | null
+  vehicleMake: string | null
+  vehicleModel: string | null
+  vehicleYear: number | null
+  vehicleColor: string | null
+  vehiclePlate: string | null
+  vehicleVin: string | null
+  licenseState: string | null
+  licenseNumber: string | null
+  licenseExpirationDate: string | null
+  licenseStatus: ReviewStatus
+  insuranceCompany: string | null
+  insuranceNaicNumber: string | null
+  insurancePolicyNumber: string | null
+  insuranceEffectiveDate: string | null
+  insuranceExpirationDate: string | null
+  insuranceStatus: ReviewStatus
+  backgroundStatus: BackgroundStatus
+  backgroundConsentAt: string | null
+  backgroundConsentIp?: string | null
+  backgroundDisclosureVersion?: string | null
+  backgroundReviewedAt: string | null
+  backgroundNotes: string | null
+  hasSsnLast4: boolean
+  hasLicenseAndInsurance: boolean | null
+  cleanDrivingRecord: boolean | null
+  attestedAt?: string | null
+  accreditationStatus: AccreditationStatus
+  reviewedBy?: string | null
+  rejectionReason: string | null
+  applicationSource: string | null
+  submittedAt: string | null
+  reviewedAt: string | null
+  createdAt: string
+  updatedAt: string
+  isSubmitted: boolean
+  documents: { licenseFront: boolean; licenseBack: boolean; insuranceCard: boolean }
+}
+
+export interface AccreditationDetail extends AccreditationProfile {
+  user: { id: string; email: string | null; displayName: string | null; phone: string | null; stripeAccountId: string | null }
+  eligibility: { eligible: boolean; code: string; reason?: string }
+  missing: string[]
 }

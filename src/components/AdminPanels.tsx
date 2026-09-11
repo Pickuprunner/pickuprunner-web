@@ -1,20 +1,22 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
+import { getRouteApi, Link } from '@tanstack/react-router'
+import toast from 'react-hot-toast'
 import {
   AlertCircle,
   Banknote,
-  Camera,
   Car,
   Check,
   CheckCircle2,
   ChevronDown,
   ClipboardList,
+  Eye,
   FileText,
-  Inbox,
   Loader2,
   MapPin,
   Package,
-  Search,
-  User,
+  UserRoundCheck,
+  UserRoundX,
+  Users,
   X,
 } from 'lucide-react'
 
@@ -22,250 +24,79 @@ import {
   adminApi,
   accreditationsApi,
   driverReviewApi,
+  usersApi,
   type Accreditation,
-  type AdminCustomer,
-  type AdminDriver,
+  type AccountStatus,
   type AdminOrder,
+  type AdminUser,
+  type Role,
 } from '../lib/api'
 
-const money = (cents?: number | null) =>
-  typeof cents === 'number' ? '$' + (cents / 100).toFixed(2) : '—'
+import {
+  Avatar,
+  Card,
+  EligibilityBadge,
+  EligibilityNote,
+  CardLink,
+  CARD_BACKGROUND,
+  day,
+  decimal,
+  Detail,
+  ErrorLine,
+  FilterRow,
+  IconBubble,
+  itemLines,
+  money,
+  PanelState,
+  SearchBox,
+  Spinner,
+  Stat,
+  StatusBadge,
+  Total,
+  useAdmin,
+  useAdminData,
+  useRegisterReload,
+  ViewHint,
+} from './AdminUi'
+import { approveBlockers, QuickCheck } from './AdminQuickCheck'
 
-const decimal = (value?: number | string | null) => {
-  const n = typeof value === 'string' ? Number.parseFloat(value) : value
-  return typeof n === 'number' && Number.isFinite(n) ? n : null
-}
+// Filters live in the URL (?status=…&q=…) so that opening a record and coming
+// back lands on the same filtered list. App.tsx validates these search params.
 
-const day = (value?: string | null) =>
-  value ? new Date(value).toLocaleDateString() : '—'
-
-const humanise = (value: string) => value.replace(/_/g, ' ')
-
-const STATUS_COLORS: Record<string, string> = {
-  approved: '#22C55E',
-  delivered: '#22C55E',
-  paid: '#22C55E',
-  test_paid: '#22C55E',
-  active: '#22C55E',
-  rejected: '#EF4444',
-  cancelled: '#EF4444',
-  failed: '#EF4444',
-  suspended: '#EF4444',
-  under_review: '#F5C400',
-  in_review: '#F5C400',
-  pending: '#F5C400',
-  unpaid: '#F5C400',
-  link_sent: '#F5C400',
-  refunded: '#F5C400',
-  in_progress: '#6699FF',
-  assigned: '#6699FF',
-  accepted: '#6699FF',
-  picked_up: '#6699FF',
-  en_route: '#6699FF',
-  shopping: '#6699FF',
-  not_started: '#8891A8',
-}
-
-export function StatusBadge({ label, value }: { label?: string; value?: string | null }) {
-  if (!value) return null
-
-  const color = STATUS_COLORS[value] || '#8891A8'
-
-  return (
-    <span
-      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold capitalize whitespace-nowrap"
-      style={{ background: `${color}1A`, border: `1px solid ${color}59`, color }}
-    >
-      {label && <span className="opacity-70 font-medium">{label}</span>}
-      {humanise(value)}
-    </span>
-  )
-}
-
-function Detail({ icon, children }: { icon?: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
-      {icon && <span className="flex-shrink-0 opacity-70">{icon}</span>}
-      <span className="truncate">{children}</span>
-    </div>
-  )
-}
-
-function Stat({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="min-w-0">
-      <p className="text-sm font-bold text-foreground truncate">{value}</p>
-      <p className="text-[11px] text-muted-foreground">{label}</p>
-    </div>
-  )
-}
-
-function Card({ children }: { children: React.ReactNode }) {
-  return (
-    <article
-      className="rounded-2xl border border-border p-4 sm:p-5"
-      style={{ background: 'hsl(237 40% 6%)' }}
-    >
-      {children}
-    </article>
-  )
-}
-
-function FilterRow<T extends string>({
-  options, value, onChange,
-}: { options: readonly T[]; value: T; onChange: (next: T) => void }) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      {options.map((option) => (
-        <button
-          key={option}
-          onClick={() => onChange(option)}
-          className="rounded-lg border px-3 py-2 text-xs font-semibold capitalize transition-colors"
-          style={{
-            background: value === option ? 'hsl(217 100% 50% / 0.15)' : 'hsl(237 40% 6%)',
-            borderColor: value === option ? 'hsl(217 100% 50% / 0.4)' : 'hsl(var(--border))',
-            color: value === option ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))',
-          }}
-        >
-          {option === 'all' ? 'All' : humanise(option)}
-        </button>
-      ))}
-    </div>
-  )
-}
-
-function SearchBox({ value, onChange, placeholder }: {
-  value: string; onChange: (v: string) => void; placeholder: string
-}) {
-  return (
-    <div className="relative flex-1 min-w-[12rem]">
-      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-      <input
-        type="search"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        aria-label={placeholder}
-        className="w-full rounded-lg border border-border bg-background py-2 pl-9 pr-3 text-xs text-foreground outline-none focus:ring-2 focus:ring-primary/50"
-      />
-    </div>
-  )
-}
-
-function PanelState({ loading, error, empty, emptyLabel, emptyHint, children }: {
-  loading: boolean
-  error: string
-  empty: boolean
-  emptyLabel: string
-  emptyHint?: string
-  children: React.ReactNode
-}) {
-  return (
-    <>
-      {error && (
-        <p className="mb-4 text-sm text-destructive flex items-center gap-1.5">
-          <AlertCircle size={15} />
-          {error}
-        </p>
-      )}
-
-      {loading ? (
-        <div className="flex justify-center py-20">
-          <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-        </div>
-      ) : empty ? (
-        <div
-          className="text-center py-20 rounded-2xl border border-border"
-          style={{ background: 'hsl(237 40% 6%)' }}
-        >
-          <Inbox size={40} className="text-muted-foreground mx-auto mb-3 opacity-40" />
-          <p className="text-foreground font-medium">{emptyLabel}</p>
-          {emptyHint && <p className="text-xs text-muted-foreground mt-1">{emptyHint}</p>}
-        </div>
-      ) : (
-        children
-      )}
-    </>
-  )
-}
-
-function useAdminList<T>(load: () => Promise<T>, deps: unknown[]) {
-  const [data, setData] = useState<T | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const request = useRef(0)
-
-  const run = useCallback(async () => {
-    const id = ++request.current
-
-    setLoading(true)
-    setError('')
-
-    try {
-      const result = await load()
-      if (request.current === id) setData(result)
-    } catch (err) {
-      if (request.current === id) {
-        setError(err instanceof Error ? err.message : 'Could not load that.')
-      }
-    } finally {
-      if (request.current === id) setLoading(false)
-    }
-  }, deps)
-
-  useEffect(() => { run() }, [run])
-
-  return { data, loading, error, reload: run }
-}
-
-function useDebounced<T>(value: T, delay = 350) {
-  const [settled, setSettled] = useState(value)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setSettled(value), delay)
-    return () => clearTimeout(timer)
-  }, [value, delay])
-
-  return settled
-}
-
-function Total({ shown, total }: { shown: number; total?: number }) {
-  return (
-    <p className="text-xs text-muted-foreground mb-3">
-      Showing {shown}{typeof total === 'number' ? ` of ${total}` : ''}
-    </p>
-  )
-}
-
-export type PanelProps = { token: string; registerReload: (reload: () => void) => void }
-
-function useRegisterReload(register: (reload: () => void) => void, reload: () => void) {
-  useEffect(() => { register(reload) }, [register, reload])
-}
-
-const ORDER_STATUSES = [
-  'all', 'pending', 'assigned', 'accepted', 'picked_up', 'en_route', 'delivered', 'cancelled',
+export const ORDER_STATUSES = [
+  'all', 'pending', 'assigned', 'accepted', 'shopping', 'picked_up', 'en_route', 'delivered', 'cancelled',
 ] as const
+export type OrderFilter = (typeof ORDER_STATUSES)[number]
 
-type OrderFilter = (typeof ORDER_STATUSES)[number]
+export const APPLICATION_STATUSES = [
+  'all', 'in_progress', 'under_review', 'approved', 'rejected',
+] as const
+export type ApplicationFilter = (typeof APPLICATION_STATUSES)[number]
+
+export const ACCOUNT_ROLES = ['all', 'customer', 'driver', 'admin'] as const
+export type AccountFilter = (typeof ACCOUNT_ROLES)[number]
+
+const ordersRoute = getRouteApi('/admin/orders')
+const customersRoute = getRouteApi('/admin/customers')
+const driversRoute = getRouteApi('/admin/drivers')
+const applicationsRoute = getRouteApi('/admin/applications')
+const accountsRoute = getRouteApi('/admin/accounts')
+
+// ── Orders ──────────────────────────────────────────────────────────────────
 
 function OrderCard({ order }: { order: AdminOrder }) {
   const distance = decimal(order.distanceMiles)
   const tip = decimal(order.tipAmount)
+  const items = itemLines(order.items)
 
   const customer = order.customer?.displayName || order.customerName || order.customer?.email || 'Unknown customer'
   const contact = order.customer?.email || order.customerEmail
   const phone = order.customer?.phone || order.customerPhone
 
   return (
-    <Card>
+    <CardLink to="/admin/orders/$orderId" params={{ orderId: order.id }}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-        <div
-          className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-          style={{ background: 'hsl(217 100% 50% / 0.15)' }}
-        >
-          <Package size={18} className="text-primary" />
-        </div>
+        <IconBubble><Package size={18} className="text-primary" /></IconBubble>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -286,6 +117,8 @@ function OrderCard({ order }: { order: AdminOrder }) {
           <p className="text-lg font-bold text-foreground">{money(order.amountCents)}</p>
           <p className="text-[11px] text-muted-foreground">{day(order.createdAt)}</p>
         </div>
+
+        <ViewHint />
       </div>
 
       <div className="mt-4 space-y-1.5">
@@ -301,61 +134,59 @@ function OrderCard({ order }: { order: AdminOrder }) {
         </Detail>
       </div>
 
-      {order.items && (
+      {items.length > 0 && (
         <p className="mt-3 text-xs text-muted-foreground leading-relaxed line-clamp-2">
-          <span className="text-muted-foreground/70">Items: </span>{order.items}
+          <span className="text-muted-foreground/70">Items: </span>{items.join(', ')}
         </p>
       )}
 
       <div className="mt-4 pt-4 border-t border-border grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Stat label="Distance" value={distance !== null ? distance.toFixed(1) + ' mi' : '—'} />
-        <Stat label="Tip" value={tip !== null ? '$' + tip.toFixed(2) : '—'} />
+        {/* tip_amount is stored in cents. */}
+        <Stat label="Tip" value={tip !== null ? money(tip) : '—'} />
         <Stat label="Driver payout" value={money(order.earnings?.payoutCents)} />
         <Stat label="Delivered" value={day(order.deliveredAt)} />
       </div>
-
-      {order.deliveryPhotoUrl && (
-        <a
-          href={order.deliveryPhotoUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-3 inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
-        >
-          <Camera size={12} />Proof of delivery
-        </a>
-      )}
-    </Card>
+    </CardLink>
   )
 }
 
-export function OrdersPanel({ token, registerReload }: PanelProps) {
-  const [status, setStatus] = useState<OrderFilter>('all')
-  const [search, setSearch] = useState('')
-  const query = useDebounced(search)
+export function OrdersPanel() {
+  const { token } = useAdmin()
+  const { status = 'all', q = '' } = ordersRoute.useSearch()
+  const navigate = ordersRoute.useNavigate()
 
-  const { data, loading, error, reload } = useAdminList(
+  const { data, loading, error, reload } = useAdminData(
     () => adminApi.orders(token, {
       status: status === 'all' ? undefined : status,
-      search: query || undefined,
+      search: q || undefined,
       limit: 50,
     }),
-    [token, status, query],
+    [token, status, q],
   )
 
-  useRegisterReload(registerReload, reload)
+  useRegisterReload(reload)
 
   return (
     <>
       <div className="flex flex-wrap gap-3 mb-4">
-        <SearchBox value={search} onChange={setSearch} placeholder="Search ref, name, phone, address" />
+        <SearchBox
+          value={q}
+          onCommit={(next) => navigate({ search: (prev) => ({ ...prev, q: next || undefined }), replace: true })}
+          placeholder="Search ref, name, phone, address"
+        />
       </div>
 
       <div className="mb-6">
-        <FilterRow<OrderFilter> options={ORDER_STATUSES} value={status} onChange={setStatus} />
+        <FilterRow<OrderFilter>
+          options={ORDER_STATUSES}
+          value={status}
+          onChange={(next) => navigate({ search: (prev) => ({ ...prev, status: next === 'all' ? undefined : next }) })}
+        />
       </div>
 
       <PanelState
-        loading={loading}
+        loading={loading && !data}
         error={error}
         empty={!data?.orders.length}
         emptyLabel="No orders"
@@ -370,25 +201,32 @@ export function OrdersPanel({ token, registerReload }: PanelProps) {
   )
 }
 
-export function CustomersPanel({ token, registerReload }: PanelProps) {
-  const [search, setSearch] = useState('')
-  const query = useDebounced(search)
+// ── Customers ───────────────────────────────────────────────────────────────
 
-  const { data, loading, error, reload } = useAdminList(
-    () => adminApi.customers(token, { search: query || undefined, limit: 50 }),
-    [token, query],
+export function CustomersPanel() {
+  const { token } = useAdmin()
+  const { q = '' } = customersRoute.useSearch()
+  const navigate = customersRoute.useNavigate()
+
+  const { data, loading, error, reload } = useAdminData(
+    () => adminApi.customers(token, { search: q || undefined, limit: 50 }),
+    [token, q],
   )
 
-  useRegisterReload(registerReload, reload)
+  useRegisterReload(reload)
 
   return (
     <>
       <div className="flex flex-wrap gap-3 mb-6">
-        <SearchBox value={search} onChange={setSearch} placeholder="Search name, email, phone" />
+        <SearchBox
+          value={q}
+          onCommit={(next) => navigate({ search: { q: next || undefined }, replace: true })}
+          placeholder="Search name, email, phone"
+        />
       </div>
 
       <PanelState
-        loading={loading}
+        loading={loading && !data}
         error={error}
         empty={!data?.customers.length}
         emptyLabel="No customers"
@@ -396,14 +234,9 @@ export function CustomersPanel({ token, registerReload }: PanelProps) {
         <Total shown={data?.customers.length ?? 0} total={data?.total} />
         <div className="space-y-3">
           {data?.customers.map((customer) => (
-            <Card key={customer.id}>
+            <CardLink key={customer.id} to="/admin/customers/$customerId" params={{ customerId: customer.id }}>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                  style={{ background: 'hsl(217 100% 50% / 0.15)' }}
-                >
-                  <User size={18} className="text-primary" />
-                </div>
+                <Avatar url={customer.photoUrl} name={customer.displayName || customer.email} />
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -428,6 +261,8 @@ export function CustomersPanel({ token, registerReload }: PanelProps) {
                     <Detail>Last seen {day(customer.lastSignIn)}</Detail>
                   </div>
                 </div>
+
+                <ViewHint />
               </div>
 
               <div className="mt-4 pt-4 border-t border-border grid grid-cols-2 sm:grid-cols-5 gap-3">
@@ -437,7 +272,7 @@ export function CustomersPanel({ token, registerReload }: PanelProps) {
                 <Stat label="Last order" value={day(customer.orders?.lastOrderAt)} />
                 <Stat label="Total spent" value={money(customer.totalSpentCents)} />
               </div>
-            </Card>
+            </CardLink>
           ))}
         </div>
       </PanelState>
@@ -445,25 +280,32 @@ export function CustomersPanel({ token, registerReload }: PanelProps) {
   )
 }
 
-export function DriversPanel({ token, registerReload }: PanelProps) {
-  const [search, setSearch] = useState('')
-  const query = useDebounced(search)
+// ── Drivers ─────────────────────────────────────────────────────────────────
 
-  const { data, loading, error, reload } = useAdminList(
-    () => adminApi.drivers(token, { search: query || undefined, limit: 50 }),
-    [token, query],
+export function DriversPanel() {
+  const { token } = useAdmin()
+  const { q = '' } = driversRoute.useSearch()
+  const navigate = driversRoute.useNavigate()
+
+  const { data, loading, error, reload } = useAdminData(
+    () => adminApi.drivers(token, { search: q || undefined, limit: 50 }),
+    [token, q],
   )
 
-  useRegisterReload(registerReload, reload)
+  useRegisterReload(reload)
 
   return (
     <>
       <div className="flex flex-wrap gap-3 mb-6">
-        <SearchBox value={search} onChange={setSearch} placeholder="Search name, email, phone" />
+        <SearchBox
+          value={q}
+          onCommit={(next) => navigate({ search: { q: next || undefined }, replace: true })}
+          placeholder="Search name, email, phone"
+        />
       </div>
 
       <PanelState
-        loading={loading}
+        loading={loading && !data}
         error={error}
         empty={!data?.drivers.length}
         emptyLabel="No drivers"
@@ -472,14 +314,9 @@ export function DriversPanel({ token, registerReload }: PanelProps) {
         <Total shown={data?.drivers.length ?? 0} total={data?.total} />
         <div className="space-y-3">
           {data?.drivers.map((driver) => (
-            <Card key={driver.id}>
+            <CardLink key={driver.id} to="/admin/drivers/$driverId" params={{ driverId: driver.id }}>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                  style={{ background: 'hsl(217 100% 50% / 0.15)' }}
-                >
-                  <Car size={18} className="text-primary" />
-                </div>
+                <Avatar url={driver.photoUrl} name={driver.displayName || driver.email} />
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -487,10 +324,10 @@ export function DriversPanel({ token, registerReload }: PanelProps) {
                       {driver.displayName || driver.email}
                     </p>
                     <StatusBadge value={driver.status} />
-                    <StatusBadge
-                      label="Can drive"
-                      value={driver.eligibility?.eligible ? 'approved' : 'rejected'}
-                    />
+                    {driver.isAvailable !== undefined && (
+                      <StatusBadge value={driver.isAvailable ? 'on_duty' : 'off_duty'} />
+                    )}
+                    <EligibilityBadge eligibility={driver.eligibility} />
                   </div>
 
                   <p className="text-xs text-muted-foreground truncate">
@@ -517,6 +354,8 @@ export function DriversPanel({ token, registerReload }: PanelProps) {
                     <Detail>Joined {day(driver.createdAt)}</Detail>
                   </div>
                 </div>
+
+                <ViewHint />
               </div>
 
               <div className="mt-4 pt-4 border-t border-border flex flex-wrap gap-1.5">
@@ -526,21 +365,16 @@ export function DriversPanel({ token, registerReload }: PanelProps) {
                 <StatusBadge label="Background" value={driver.accreditation?.background} />
               </div>
 
-              {!driver.eligibility?.eligible && driver.eligibility?.reason && (
-                <p className="mt-3 text-xs text-muted-foreground flex items-start gap-1.5">
-                  <AlertCircle size={12} className="flex-shrink-0 mt-0.5" />
-                  {driver.eligibility.reason}
-                </p>
-              )}
+              <div className="mt-3"><EligibilityNote eligibility={driver.eligibility} /></div>
 
               <div className="mt-4 pt-4 border-t border-border grid grid-cols-2 sm:grid-cols-5 gap-3">
                 <Stat label="Deliveries" value={driver.orders?.total ?? 0} />
                 <Stat label="Completed" value={driver.orders?.delivered ?? 0} />
                 <Stat label="Active" value={driver.orders?.active ?? 0} />
                 <Stat label="Unsettled" value={driver.orders?.unsettled ?? 0} />
-                <Stat label="Earned" value={money(driver.totalEarnedCents)} />
+                <Stat label="Paid out" value={money(driver.totalEarnedCents)} />
               </div>
-            </Card>
+            </CardLink>
           ))}
         </div>
       </PanelState>
@@ -548,16 +382,21 @@ export function DriversPanel({ token, registerReload }: PanelProps) {
   )
 }
 
-const APPLICATION_STATUSES = [
-  'all', 'in_progress', 'under_review', 'approved', 'rejected',
-] as const
+// ── Applications ────────────────────────────────────────────────────────────
 
-type ApplicationFilter = (typeof APPLICATION_STATUSES)[number]
-
-function ReviewActions({ application, token, onReviewed }: {
-  application: Accreditation
+/** Approve / reject a whole driver profile. Used on the list and on the detail screen. */
+export function ReviewActions({ application, token, onReviewed, name, onApprove, extra, showNote = true }: {
+  application: Pick<Accreditation, 'userId' | 'accreditationStatus' | 'submittedAt'> & { missing?: string[] | null }
   token: string
   onReviewed: () => void
+  /** Who this is, for the confirmation toast. */
+  name?: string | null
+  /** Replaces the instant approve — the list opens the quick check instead. */
+  onApprove?: () => void
+  /** Shown at the end of the button row (the list's "View full application"). */
+  extra?: React.ReactNode
+  /** The "still missing / not submitted" line — off where the page says it already. */
+  showNote?: boolean
 }) {
   const [rejecting, setRejecting] = useState(false)
   const [reason, setReason] = useState('')
@@ -566,7 +405,13 @@ function ReviewActions({ application, token, onReviewed }: {
 
   const status = application.accreditationStatus
   const submitted = Boolean(application.submittedAt)
-  const blockedReason = submitted ? '' : 'Not submitted for review yet'
+  // Approve needs everything to be filled in (details, photos, consent) — or,
+  // once the driver has submitted, at least every photo (both sides of the
+  // licence and the insurance card). The server checks the same thing. The
+  // SSN digits are optional, so they never block it.
+  const blockers = approveBlockers(application)
+  const canApprove = blockers.length === 0
+  const approveBlocked = canApprove ? '' : `Still missing: ${blockers.join(', ')}`
 
   const run = async (action: 'approve' | 'reject') => {
     setBusy(action)
@@ -575,21 +420,25 @@ function ReviewActions({ application, token, onReviewed }: {
     try {
       if (action === 'approve') {
         await driverReviewApi.approve(token, application.userId)
+        toast.success(`${name || 'Driver'} approved — they can take orders now`)
       } else {
         await driverReviewApi.reject(token, application.userId, reason.trim())
+        toast.success(`${name ? name + "'s" : 'The'} application was rejected — they'll see your reason`)
       }
       setRejecting(false)
       setReason('')
       onReviewed()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'That did not go through.')
+      const message = err instanceof Error ? err.message : 'That did not go through.'
+      setError(message)
+      toast.error(message)
     } finally {
       setBusy(null)
     }
   }
 
   return (
-    <div className="mt-4 pt-4 border-t border-border">
+    <div>
       {rejecting ? (
         <div className="space-y-3">
           <label
@@ -611,6 +460,7 @@ function ReviewActions({ application, token, onReviewed }: {
 
           <div className="flex flex-wrap gap-2">
             <button
+              type="button"
               onClick={() => run('reject')}
               disabled={!reason.trim() || busy !== null}
               className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
@@ -623,6 +473,7 @@ function ReviewActions({ application, token, onReviewed }: {
             </button>
 
             <button
+              type="button"
               onClick={() => { setRejecting(false); setReason(''); setError('') }}
               disabled={busy !== null}
               className="rounded-lg border border-border px-3 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground disabled:opacity-50"
@@ -633,11 +484,21 @@ function ReviewActions({ application, token, onReviewed }: {
         </div>
       ) : (
         <div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {status === 'approved' ? (
+              <span
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold"
+                style={{ background: 'hsl(142 71% 45% / 0.12)', border: '1px solid hsl(142 71% 45% / 0.4)', color: '#22C55E' }}
+              >
+                <CheckCircle2 size={13} />
+                Approved
+              </span>
+            ) : (
             <button
-              onClick={() => run('approve')}
-              disabled={busy !== null || !submitted || status === 'approved'}
-              title={blockedReason || (status === 'approved' ? 'Already approved' : undefined)}
+              type="button"
+              onClick={() => (onApprove ? onApprove() : run('approve'))}
+              disabled={busy !== null || !canApprove}
+              title={approveBlocked || undefined}
               className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ background: '#22C55E', color: '#04120A' }}
             >
@@ -646,24 +507,39 @@ function ReviewActions({ application, token, onReviewed }: {
                 : <Check size={13} />}
               Approve driver
             </button>
+            )}
 
+            {status === 'rejected' ? (
+              <span
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold"
+                style={{ background: 'hsl(0 84% 60% / 0.1)', border: '1px solid hsl(0 84% 60% / 0.4)', color: '#EF4444' }}
+              >
+                <X size={13} />
+                Rejected
+              </span>
+            ) : (
             <button
+              type="button"
               onClick={() => setRejecting(true)}
-              disabled={busy !== null || !submitted || status === 'rejected'}
-              title={blockedReason || (status === 'rejected' ? 'Already rejected' : undefined)}
+              disabled={busy !== null}
+              title={status === 'approved' ? 'Take back the approval — they stop being able to take orders' : undefined}
               className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ borderColor: 'hsl(0 84% 60% / 0.5)', color: '#EF4444' }}
             >
               <X size={13} />
               Reject
             </button>
+            )}
+
+            {extra}
           </div>
 
-          {!submitted && (
+          {showNote && status !== 'approved' && (!submitted || !canApprove) && (
             <p className="mt-2.5 text-xs text-muted-foreground flex items-start gap-1.5">
               <AlertCircle size={12} className="flex-shrink-0 mt-0.5" />
-              Not submitted for review yet — the applicant has to claim their account
-              and finish accreditation in the app before this can be decided.
+              {!canApprove
+                ? `${submitted ? 'Still missing' : 'Not submitted yet — still missing'}: ${blockers.join(', ')}. You can approve once that's in, or reject now.`
+                : 'Not submitted yet, but everything is filled in — you can approve now.'}
             </p>
           )}
         </div>
@@ -679,10 +555,12 @@ function ReviewActions({ application, token, onReviewed }: {
   )
 }
 
-function ApplicationCard({ application, token, onReviewed }: {
+function ApplicationCard({ application, token, onReviewed, onQuickCheck }: {
   application: Accreditation
   token: string
   onReviewed: () => void
+  /** Approve driver opens the quick check for this application. */
+  onQuickCheck: () => void
 }) {
   const { user } = application
 
@@ -702,16 +580,17 @@ function ApplicationCard({ application, token, onReviewed }: {
   return (
     <Card>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-        <div
-          className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-          style={{ background: 'hsl(217 100% 50% / 0.15)' }}
-        >
-          <ClipboardList size={18} className="text-primary" />
-        </div>
+        <IconBubble><ClipboardList size={18} className="text-primary" /></IconBubble>
 
         <div className="flex-1 min-w-0 space-y-2">
           <div>
-            <p className="font-semibold text-foreground truncate">{name}</p>
+            <Link
+              to="/admin/applications/$userId"
+              params={{ userId: application.userId }}
+              className="font-semibold text-foreground truncate block hover:text-primary hover:underline"
+            >
+              {name}
+            </Link>
             <p className="text-xs text-muted-foreground truncate">
               {user?.email}
               {user?.phone ? ' · ' + user.phone : ''}
@@ -779,15 +658,36 @@ function ApplicationCard({ application, token, onReviewed }: {
         </details>
       )}
 
-      <ReviewActions application={application} token={token} onReviewed={onReviewed} />
+      <div className="mt-4 pt-4 border-t border-border">
+        <ReviewActions
+          application={application}
+          token={token}
+          onReviewed={onReviewed}
+          name={name}
+          onApprove={onQuickCheck}
+          extra={
+            <Link
+              to="/admin/applications/$userId"
+              params={{ userId: application.userId }}
+              className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
+              style={{ borderColor: 'hsl(217 100% 50% / 0.5)' }}
+            >
+              <Eye size={13} />
+              View full application
+            </Link>
+          }
+        />
+      </div>
     </Card>
   )
 }
 
-export function ApplicationsPanel({ token, registerReload }: PanelProps) {
-  const [status, setStatus] = useState<ApplicationFilter>('all')
+export function ApplicationsPanel() {
+  const { token } = useAdmin()
+  const { status = 'all' } = applicationsRoute.useSearch()
+  const navigate = applicationsRoute.useNavigate()
 
-  const { data, loading, error, reload } = useAdminList(
+  const { data, loading, error, reload } = useAdminData(
     () => accreditationsApi.list(token, {
       status: status === 'all' ? undefined : status,
       limit: 50,
@@ -795,16 +695,39 @@ export function ApplicationsPanel({ token, registerReload }: PanelProps) {
     [token, status],
   )
 
-  useRegisterReload(registerReload, reload)
+  useRegisterReload(reload)
+
+  // The quick check (opened by Approve driver), and the driver it's showing.
+  const [checking, setChecking] = useState<string | null>(null)
+  const applications = data?.accreditations ?? []
+  // Decided in this visit — skipped by "next" even before the list reloads.
+  const decided = useRef(new Set<string>())
+  // "Approve & next" moves down the list to the next driver who's still
+  // waiting and can be approved — wrapping round to the top at the end.
+  const nextAfter = (userId: string) => {
+    const index = applications.findIndex((application) => application.userId === userId)
+    return [...applications.slice(index + 1), ...applications.slice(0, Math.max(index, 0))]
+      .find((application) =>
+        !decided.current.has(application.userId) &&
+        application.accreditationStatus !== 'approved' &&
+        application.accreditationStatus !== 'rejected' &&
+        approveBlockers(application).length === 0,
+      )?.userId ?? null
+  }
+  const closeCheck = useCallback(() => setChecking(null), [])
 
   return (
     <>
       <div className="mb-6">
-        <FilterRow<ApplicationFilter> options={APPLICATION_STATUSES} value={status} onChange={setStatus} />
+        <FilterRow<ApplicationFilter>
+          options={APPLICATION_STATUSES}
+          value={status}
+          onChange={(next) => navigate({ search: { status: next === 'all' ? undefined : next } })}
+        />
       </div>
 
       <PanelState
-        loading={loading}
+        loading={loading && !data}
         error={error}
         empty={!data?.accreditations.length}
         emptyLabel="No driver applications"
@@ -818,10 +741,288 @@ export function ApplicationsPanel({ token, registerReload }: PanelProps) {
               application={application}
               token={token}
               onReviewed={reload}
+              onQuickCheck={() => setChecking(application.userId)}
             />
           ))}
         </div>
       </PanelState>
+
+      {checking && (
+        <QuickCheck
+          key={checking}
+          userId={checking}
+          token={token}
+          hasNext={nextAfter(checking) !== null}
+          onClose={closeCheck}
+          onDone={(next) => {
+            decided.current.add(checking)
+            const following = next ? nextAfter(checking) : null
+            reload()
+            setChecking(following)
+          }}
+        />
+      )}
+    </>
+  )
+}
+
+// ── Accounts ────────────────────────────────────────────────────────────────
+
+function RoleDropdown({ value, disabled, onChange }: {
+  value: Role
+  disabled: boolean
+  onChange: (role: Role) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const roles: Role[] = ['customer', 'driver', 'admin']
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        disabled={disabled}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className="inline-flex min-w-28 items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2 text-xs font-medium capitalize text-foreground disabled:opacity-60"
+      >
+        {value}
+        <ChevronDown size={14} className={open ? 'rotate-180 transition-transform' : 'transition-transform'} />
+      </button>
+
+      {open && (
+        <div
+          role="listbox"
+          className="absolute right-0 top-full z-30 mt-2 w-28 overflow-hidden rounded-lg border border-border shadow-xl"
+          style={{ background: 'hsl(237 40% 10%)' }}
+        >
+          {roles.map((role) => (
+            <button
+              key={role}
+              type="button"
+              role="option"
+              aria-selected={role === value}
+              onClick={() => {
+                setOpen(false)
+                if (role !== value) onChange(role)
+              }}
+              className="w-full px-3 py-2 text-left text-xs capitalize text-muted-foreground hover:bg-primary/15 hover:text-foreground"
+              style={{ background: role === value ? 'hsl(217 100% 50% / 0.15)' : undefined }}
+            >
+              {role}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Role and suspend/reactivate controls for one account. */
+export function AccountControls({ user, token, onChanged }: {
+  user: { id: string; role: Role; status: AccountStatus }
+  token: string
+  onChanged: () => void | Promise<void>
+}) {
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const update = async (action: 'role' | 'status', value: Role | AccountStatus) => {
+    setSaving(true)
+    setError('')
+
+    try {
+      if (action === 'role') {
+        await usersApi.updateRole(token, user.id, value as Role)
+        toast.success(`Role changed to ${value}`)
+      } else {
+        await usersApi.updateStatus(token, user.id, value as AccountStatus)
+        toast.success(value === 'suspended' ? 'Account suspended — signed out everywhere' : 'Account reactivated')
+      }
+      await onChanged()
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Update failed'
+      setError(message)
+      toast.error(message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const active = user.status === 'active'
+
+  return (
+    <div>
+      <div className="flex flex-wrap gap-2 items-center">
+        <RoleDropdown value={user.role} disabled={saving} onChange={(role) => update('role', role)} />
+
+        <button
+          type="button"
+          onClick={() => update('status', active ? 'suspended' : 'active')}
+          disabled={saving}
+          title={active ? 'Blocks the account and signs it out everywhere straight away' : 'Lets the account sign in again'}
+          className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold disabled:opacity-60"
+          style={{
+            borderColor: active ? 'hsl(0 84% 60% / 0.5)' : 'hsl(142 71% 45% / 0.5)',
+            color: active ? '#EF4444' : '#22C55E',
+          }}
+        >
+          {active ? <UserRoundX size={14} /> : <UserRoundCheck size={14} />}
+          {active ? 'Suspend' : 'Reactivate'}
+        </button>
+      </div>
+
+      {error && (
+        <p className="mt-3 text-xs text-destructive flex items-center gap-1">
+          <AlertCircle size={12} />
+          {error}
+        </p>
+      )}
+    </div>
+  )
+}
+
+/**
+ * The full profile for an account: the customer page for a customer (orders,
+ * spend), the driver page for a driver (application, documents, deliveries).
+ * Admins have neither, so they get the account page.
+ */
+export function ProfileLink({ user, className, children }: {
+  user: { id: string; role: Role }
+  className?: string
+  children: React.ReactNode
+}) {
+  if (user.role === 'customer') {
+    return (
+      <Link to="/admin/customers/$customerId" params={{ customerId: user.id }} className={className}>
+        {children}
+      </Link>
+    )
+  }
+  if (user.role === 'driver') {
+    return (
+      <Link to="/admin/drivers/$driverId" params={{ driverId: user.id }} className={className}>
+        {children}
+      </Link>
+    )
+  }
+  return (
+    <Link to="/admin/accounts/$userId" params={{ userId: user.id }} className={className}>
+      {children}
+    </Link>
+  )
+}
+
+/**
+ * One account. The whole card opens the full profile: the name link is
+ * stretched over the card with an ::after overlay, and the controls sit above
+ * that overlay (z-10) so they still work — buttons can't legally live inside a
+ * link, so this is the way to make the entire box clickable.
+ */
+function AccountRow({ user, token, reload }: { user: AdminUser; token: string; reload: () => void }) {
+  return (
+    <article
+      className="group relative rounded-2xl border border-border p-4 sm:p-5 transition-colors hover:border-primary/50 focus-within:border-primary/50"
+      style={{ background: CARD_BACKGROUND }}
+    >
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <Avatar url={user.photoUrl} name={user.displayName || user.email} />
+
+        <div className="flex-1 min-w-0">
+          <ProfileLink
+            user={user}
+            className="font-semibold text-foreground truncate block group-hover:text-primary focus:outline-none after:absolute after:inset-0 after:rounded-2xl after:content-[''] focus-visible:after:ring-2 focus-visible:after:ring-primary/60"
+          >
+            {user.displayName || user.email}
+          </ProfileLink>
+          <p className="text-xs text-muted-foreground truncate">
+            {user.email}
+            {user.phone ? ' · ' + user.phone : ''}
+          </p>
+        </div>
+
+        {/* Above the card-wide link; raised further while its menu is open so
+            the menu isn't painted under the next card. */}
+        <div className="relative z-10 focus-within:z-20">
+          <AccountControls user={user} token={token} onChanged={reload} />
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 mt-3 text-xs text-muted-foreground">
+        <span
+          className="rounded-full px-2 py-0.5"
+          style={{ color: user.status === 'active' ? '#22C55E' : '#EF4444' }}
+        >
+          {user.status}
+        </span>
+        <span>Joined {day(user.createdAt)}</span>
+        <span className="flex-1" />
+        <span className="font-semibold text-primary group-hover:underline">
+          {user.role === 'admin' ? 'View account →' : `View full ${user.role} profile →`}
+        </span>
+      </div>
+    </article>
+  )
+}
+
+export function AccountsPanel() {
+  const { token } = useAdmin()
+  const { role = 'all' } = accountsRoute.useSearch()
+  const navigate = accountsRoute.useNavigate()
+
+  // One request for everything: the tiles need counts for every role, so the
+  // role filter is applied here rather than on the server.
+  const { data, loading, error, reload } = useAdminData(() => usersApi.list(token), [token])
+  useRegisterReload(reload)
+
+  const all = useMemo(() => data?.users ?? [], [data])
+  const shown = role === 'all' ? all : all.filter((user) => user.role === role)
+  const count = useCallback(
+    (key: AccountFilter) => (key === 'all' ? all.length : all.filter((user) => user.role === key).length),
+    [all],
+  )
+
+  return (
+    <>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        {ACCOUNT_ROLES.map((key) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => navigate({ search: { role: key === 'all' ? undefined : key } })}
+            className="rounded-xl border p-4 text-left transition-colors"
+            style={{
+              background: role === key ? 'hsl(217 100% 50% / 0.1)' : CARD_BACKGROUND,
+              borderColor: role === key ? 'hsl(217 100% 50% / 0.4)' : 'hsl(var(--border))',
+            }}
+          >
+            <p className="text-2xl font-bold text-foreground">{count(key)}</p>
+            <p className="text-xs text-muted-foreground mt-0.5 capitalize">
+              {key === 'all' ? 'All users' : key + 's'}
+            </p>
+          </button>
+        ))}
+      </div>
+
+      <ErrorLine message={error} />
+
+      {loading && !data ? (
+        <Spinner />
+      ) : shown.length === 0 ? (
+        <div
+          className="text-center py-20 rounded-2xl border border-border"
+          style={{ background: CARD_BACKGROUND }}
+        >
+          <Users size={40} className="text-muted-foreground mx-auto mb-3 opacity-40" />
+          <p className="text-foreground font-medium">No users found</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {shown.map((user) => (
+            <AccountRow key={user.id} user={user} token={token} reload={reload} />
+          ))}
+        </div>
+      )}
     </>
   )
 }

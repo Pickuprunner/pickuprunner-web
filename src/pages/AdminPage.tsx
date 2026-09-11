@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Link, Outlet } from '@tanstack/react-router'
+import { Toaster } from 'react-hot-toast'
 import {
   AlertCircle,
   Car,
-  ChevronDown,
   ClipboardList,
   LogOut,
   Package,
@@ -10,39 +11,39 @@ import {
   Shield,
   User,
   Users,
-  UserRoundCheck,
-  UserRoundX,
 } from 'lucide-react'
 
 import {
   authApi,
   session as apiSession,
-  type AccountStatus,
   type AdminSession,
-  type AdminUser,
-  type Role,
-  usersApi,
 } from '../lib/api'
 
-import {
-  ApplicationsPanel,
-  CustomersPanel,
-  DriversPanel,
-  OrdersPanel,
-} from '../components/AdminPanels'
+import { AdminContext, type AdminContextValue } from '../components/AdminUi'
 
-type View = 'orders' | 'customers' | 'drivers' | 'applications' | 'users'
+/**
+ * The Tailwind theme maps rounded-sm/md/lg/xl/full to --radius-* variables that
+ * index.css never defines, so those corners come out square. Defined here for
+ * the admin screens (the public pages are left as they are).
+ */
+const ADMIN_RADII = {
+  '--radius-sm': '0.25rem',
+  '--radius-md': '0.375rem',
+  '--radius-lg': '0.5rem',
+  '--radius-xl': '0.75rem',
+  '--radius-full': '9999px',
+} as React.CSSProperties
 
-const VIEWS = [
-  { key: 'orders', label: 'Orders', icon: Package },
-  { key: 'customers', label: 'Customers', icon: User },
-  { key: 'drivers', label: 'Drivers', icon: Car },
-  { key: 'applications', label: 'Applications', icon: ClipboardList },
-  { key: 'users', label: 'Accounts', icon: Users },
+const TABS = [
+  { to: '/admin/orders', label: 'Orders', icon: Package },
+  { to: '/admin/customers', label: 'Customers', icon: User },
+  { to: '/admin/drivers', label: 'Drivers', icon: Car },
+  { to: '/admin/applications', label: 'Applications', icon: ClipboardList },
+  { to: '/admin/accounts', label: 'Accounts', icon: Users },
 ] as const
 
 const SESSION_KEY = 'pickuprunner_admin_session'
-  
+
 function Login({
   onLogin,
   notice,
@@ -87,7 +88,7 @@ function Login({
   return (
     <div
       className="min-h-screen flex items-center justify-center px-4"
-      style={{ background: 'hsl(240 67% 3%)' }}
+      style={{ background: 'hsl(240 67% 3%)', ...ADMIN_RADII }}
     >
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
@@ -184,305 +185,22 @@ function Login({
   )
 }
 
-function RoleDropdown({
-  value,
-  disabled,
-  onChange,
-}: {
-  value: Role
-  disabled: boolean
-  onChange: (role: Role) => void
-}) {
-  const [open, setOpen] = useState(false)
-
-  const roles: Role[] = [
-    'customer',
-    'driver',
-    'admin',
-  ]
-
-  return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        disabled={disabled}
-        className="inline-flex min-w-28 items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2 text-xs font-medium capitalize text-foreground disabled:opacity-60"
-      >
-        {value}
-
-        <ChevronDown
-          size={14}
-          className={
-            open
-              ? 'rotate-180 transition-transform'
-              : 'transition-transform'
-          }
-        />
-      </button>
-
-      {open && (
-        <div
-          className="absolute right-0 top-full z-30 mt-2 w-28 overflow-hidden rounded-lg border border-border shadow-xl"
-          style={{
-            background: 'hsl(237 40% 10%)',
-          }}
-        >
-          {roles.map((role) => (
-            <button
-              key={role}
-              type="button"
-              onClick={() => {
-                setOpen(false)
-
-                if (role !== value) {
-                  onChange(role)
-                }
-              }}
-              className="w-full px-3 py-2 text-left text-xs capitalize text-muted-foreground hover:bg-primary/15 hover:text-foreground"
-              style={{
-                background:
-                  role === value
-                    ? 'hsl(217 100% 50% / 0.15)'
-                    : undefined,
-              }}
-            >
-              {role}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function UserRow({
-  user,
-  token,
-  reload,
-}: {
-  user: AdminUser
-  token: string
-  reload: () => void
-}) {
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
-
-  const update = async (
-    action: 'role' | 'status',
-    value: Role | AccountStatus
-  ) => {
-    setSaving(true)
-    setError('')
-
-    try {
-      if (action === 'role') {
-        await usersApi.updateRole(
-          token,
-          user.id,
-          value as Role
-        )
-      } else {
-        await usersApi.updateStatus(
-          token,
-          user.id,
-          value as AccountStatus
-        )
-      }
-
-      await reload()
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Update failed'
-      )
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <article
-      className="rounded-2xl border border-border p-4 sm:p-5"
-      style={{
-        background: 'hsl(237 40% 6%)',
-      }}
-    >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div
-          className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-          style={{
-            background: 'hsl(217 100% 50% / 0.15)',
-          }}
-        >
-          <User
-            size={18}
-            className="text-primary"
-          />
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-foreground truncate">
-            {user.displayName || user.email}
-          </p>
-
-          <p className="text-xs text-muted-foreground truncate">
-            {user.email}
-            {user.phone ? ' · ' + user.phone : ''}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap gap-2 items-center">
-          <RoleDropdown
-            value={user.role}
-            disabled={saving}
-            onChange={(role) =>
-              update('role', role)
-            }
-          />
-
-          <button
-            onClick={() =>
-              update(
-                'status',
-                user.status === 'active'
-                  ? 'suspended'
-                  : 'active'
-              )
-            }
-            disabled={saving}
-            className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold disabled:opacity-60"
-            style={{
-              borderColor:
-                user.status === 'active'
-                  ? 'hsl(0 84% 60% / 0.5)'
-                  : 'hsl(142 71% 45% / 0.5)',
-              color:
-                user.status === 'active'
-                  ? '#EF4444'
-                  : '#22C55E',
-            }}
-          >
-            {user.status === 'active' ? (
-              <UserRoundX size={14} />
-            ) : (
-              <UserRoundCheck size={14} />
-            )}
-
-            {user.status === 'active'
-              ? 'Suspend'
-              : 'Reactivate'}
-          </button>
-        </div>
-      </div>
-
-      <div className="flex gap-2 mt-3 text-xs text-muted-foreground">
-        <span
-          className="rounded-full px-2 py-0.5"
-          style={{
-            color:
-              user.status === 'active'
-                ? '#22C55E'
-                : '#EF4444',
-          }}
-        >
-          {user.status}
-        </span>
-
-        <span>
-          Joined{' '}
-          {new Date(
-            user.createdAt
-          ).toLocaleDateString()}
-        </span>
-      </div>
-
-      {error && (
-        <p className="mt-3 text-xs text-destructive flex items-center gap-1">
-          <AlertCircle size={12} />
-          {error}
-        </p>
-      )}
-    </article>
-  )
-}
-
 export function AdminPage() {
-  const [session, setSession] =
-    useState<AdminSession | null>(() => {
-      try {
-        return JSON.parse(
-          sessionStorage.getItem(
-            SESSION_KEY
-          ) || 'null'
-        )
-      } catch {
-        return null
-      }
-    })
-
-  const [users, setUsers] = useState<AdminUser[]>([])
-
-  const [allUsers, setAllUsers] =
-    useState<AdminUser[]>([])
-
-  const [loading, setLoading] =
-    useState(false)
-
-  const [error, setError] =
-    useState('')
-
-  const [role, setRole] =
-    useState<'all' | Role>('all')
-
-  const loadUsers = async () => {
-    if (!session) return
-
-    setLoading(true)
-    setError('')
-
+  const [session, setSession] = useState<AdminSession | null>(() => {
     try {
-      const data = await usersApi.list(
-        session.accessToken
-      )
-
-      const list = data?.users ?? []
-
-      setAllUsers(list)
-
-      const filteredUsers =
-        role === 'all'
-          ? list
-          : list.filter(
-              (user) =>
-                user.role === role
-            )
-
-      setUsers(filteredUsers)
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Unable to load users.'
-      )
-    } finally {
-      setLoading(false)
+      return JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null')
+    } catch {
+      return null
     }
-  }
-
-  useEffect(() => {
-    loadUsers()
-  }, [session, role])
-
-  const [view, setView] = useState<View>('orders')
-
-  const panelReload = useRef<(() => void) | null>(null)
-  const registerReload = useCallback((reload: () => void) => {
-    panelReload.current = reload
-  }, [])
+  })
 
   const [expiredNotice, setExpiredNotice] = useState('')
+
+  // Whatever screen is mounted registers its reload here for the Refresh button.
+  const reloadRef = useRef<(() => void) | null>(null)
+  const registerReload = useCallback((reload: (() => void) | null) => {
+    reloadRef.current = reload
+  }, [])
 
   const login = (nextSession: AdminSession) => {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(nextSession))
@@ -498,10 +216,7 @@ export function AdminPage() {
   const logout = () => {
     sessionStorage.removeItem(SESSION_KEY)
     apiSession.set(null)
-
     setSession(null)
-    setUsers([])
-    setAllUsers([])
   }
 
   useEffect(() => {
@@ -527,8 +242,6 @@ export function AdminPage() {
       apiSession.set(null)
 
       setSession(null)
-      setUsers([])
-      setAllUsers([])
       setExpiredNotice('Your session expired. Please sign in again.')
     })
 
@@ -538,198 +251,95 @@ export function AdminPage() {
     }
   }, [session])
 
-  const counts = {
-    all: allUsers.length,
 
-    customer: allUsers.filter(
-      (user) =>
-        user.role === 'customer'
-    ).length,
+  const signedInAs = session?.user?.id ?? null
+  const context = useMemo<AdminContextValue | null>(
+    () => (session ? { token: session.accessToken, user: session.user, registerReload } : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [signedInAs, registerReload],
+  )
 
-    driver: allUsers.filter(
-      (user) =>
-        user.role === 'driver'
-    ).length,
-
-    admin: allUsers.filter(
-      (user) =>
-        user.role === 'admin'
-    ).length,
-  }
-
-  if (!session) {
+  if (!session || !context) {
     return <Login onLogin={login} notice={expiredNotice} />
   }
 
   return (
     <div
       className="min-h-screen pt-20 pb-16 px-4 sm:px-6"
-      style={{
-        background: 'hsl(240 67% 3%)',
-      }}
+      style={{ background: 'hsl(240 67% 3%)', ...ADMIN_RADII }}
     >
-      <div className="max-w-4xl mx-auto">
-
+      {/* Confirmation pop-ups for admin actions; below the fixed site header. */}
+      <Toaster
+        position="top-right"
+        containerStyle={{ top: 80 }}
+        toastOptions={{
+          duration: 3500,
+          style: {
+            background: 'hsl(237 40% 10%)',
+            color: 'hsl(var(--foreground))',
+            border: '1px solid hsl(var(--border))',
+            fontSize: '13px',
+          },
+          success: { iconTheme: { primary: '#22C55E', secondary: '#04120A' } },
+          error: { iconTheme: { primary: '#EF4444', secondary: '#fff' }, duration: 5000 },
+        }}
+      />
+      <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">
+            <Link to="/admin/orders" className="text-2xl font-bold text-foreground">
               Admin Dashboard
-            </h1>
+            </Link>
 
             <p className="text-sm text-muted-foreground mt-0.5">
-              Manage platform accounts
+              Signed in as {session.user.displayName || session.user.email}
             </p>
           </div>
 
           <div className="flex gap-2">
-
             <button
-              onClick={() => {
-                if (view === 'users') loadUsers()
-                else panelReload.current?.()
-              }}
-              disabled={view === 'users' && loading}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm text-muted-foreground disabled:opacity-60"
+              type="button"
+              onClick={() => reloadRef.current?.()}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm text-muted-foreground hover:text-foreground"
             >
-              <RefreshCw
-                size={14}
-                className={view === 'users' && loading ? 'animate-spin' : ''}
-              />
-
+              <RefreshCw size={14} />
               Refresh
             </button>
 
             <button
+              type="button"
               onClick={logout}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm text-muted-foreground"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm text-muted-foreground hover:text-foreground"
             >
               <LogOut size={14} />
-
               Sign out
             </button>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-1 mb-6 rounded-xl border border-border p-1 w-fit">
-          {VIEWS.map(({ key, label, icon: Icon }) => (
-            <button
-              key={key}
-              onClick={() => setView(key)}
+        <nav
+          aria-label="Admin sections"
+          className="flex flex-wrap gap-1 mb-6 rounded-xl border border-border p-1 w-fit"
+        >
+          {TABS.map(({ to, label, icon: Icon }) => (
+            <Link
+              key={to}
+              to={to}
+              // Active on the list and on every detail page under it.
+              activeOptions={{ exact: false, includeSearch: false }}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-              style={{
-                background: view === key ? '#0066FF' : 'transparent',
-                color: view === key ? '#fff' : 'hsl(var(--muted-foreground))',
-              }}
+              activeProps={{ style: { background: '#0066FF', color: '#fff' } }}
+              inactiveProps={{ style: { background: 'transparent', color: 'hsl(var(--muted-foreground))' } }}
             >
               <Icon size={15} />
               {label}
-            </button>
+            </Link>
           ))}
-        </div>
+        </nav>
 
-        {session && view === 'orders' && (
-          <OrdersPanel token={session.accessToken} registerReload={registerReload} />
-        )}
-
-        {session && view === 'customers' && (
-          <CustomersPanel token={session.accessToken} registerReload={registerReload} />
-        )}
-
-        {session && view === 'drivers' && (
-          <DriversPanel token={session.accessToken} registerReload={registerReload} />
-        )}
-
-        {session && view === 'applications' && (
-          <ApplicationsPanel token={session.accessToken} registerReload={registerReload} />
-        )}
-
-        {view === 'users' && (
-        <>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          {(
-            [
-              'all',
-              'customer',
-              'driver',
-              'admin',
-            ] as const
-          ).map((key) => (
-            <button
-              key={key}
-              onClick={() =>
-                setRole(key)
-              }
-              className="rounded-xl border p-4 text-left transition-colors"
-              style={{
-                background:
-                  role === key
-                    ? 'hsl(217 100% 50% / 0.1)'
-                    : 'hsl(237 40% 6%)',
-
-                borderColor:
-                  role === key
-                    ? 'hsl(217 100% 50% / 0.4)'
-                    : 'hsl(var(--border))',
-              }}
-            >
-              <p className="text-2xl font-bold text-foreground">
-                {counts[key]}
-              </p>
-
-              <p className="text-xs text-muted-foreground mt-0.5 capitalize">
-                {key === 'all'
-                  ? 'All users'
-                  : key + 's'}
-              </p>
-            </button>
-          ))}
-        </div>
-
-        {error && (
-          <p className="mb-4 text-sm text-destructive flex items-center gap-1.5">
-            <AlertCircle size={15} />
-            {error}
-          </p>
-        )}
-
-        {loading ? (
-          <div className="flex justify-center py-20">
-            <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-          </div>
-        ) : users.length === 0 ? (
-
-          <div
-            className="text-center py-20 rounded-2xl border border-border"
-            style={{
-              background: 'hsl(237 40% 6%)',
-            }}
-          >
-            <Users
-              size={40}
-              className="text-muted-foreground mx-auto mb-3 opacity-40"
-            />
-
-            <p className="text-foreground font-medium">
-              No users found
-            </p>
-          </div>
-
-        ) : (
-
-          <div className="space-y-3">
-            {users.map((user) => (
-              <UserRow
-                key={user.id}
-                user={user}
-                token={session.accessToken}
-                reload={loadUsers}
-              />
-            ))}
-          </div>
-        )}
-        </>
-        )}
-
+        <AdminContext.Provider value={context}>
+          <Outlet />
+        </AdminContext.Provider>
       </div>
     </div>
   )

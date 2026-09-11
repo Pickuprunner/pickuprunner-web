@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { Zap, Share2, Camera } from 'lucide-react'
+import { StoreButtons } from './StoreButtons'
 
 export function Footer() {
   return (
@@ -18,6 +19,7 @@ export function Footer() {
             <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
               Hyper-local grocery and pharmacy delivery. Fast, transparent, and trusted with 100% background-checked drivers.
             </p>
+            <StoreButtons className="mt-4" />
             <div className="flex gap-3 mt-4">
               <a href="#" className="p-2 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-colors"><Share2 size={16} /></a>
               <a href="#" className="p-2 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-colors"><Camera size={16} /></a>

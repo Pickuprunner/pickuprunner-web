@@ -1,3 +1,5 @@
+import { StoreButtons } from '../components/StoreButtons'
+import { APP_STORE_URL, PLAY_STORE_URL } from '../lib/appStores'
 import { useState } from 'react'
 import {
   AlertCircle, Car, CheckCircle2, ChevronRight, Clock, DollarSign, Mail,
@@ -125,10 +127,12 @@ export function DriversPage() {
           <p className="text-muted-foreground mb-2">
             Thanks, <strong className="text-foreground">{applicantName}</strong>! We have your details.
           </p>
-          <p className="text-sm text-muted-foreground mb-8">
+          <p className="text-sm text-muted-foreground mb-6">
             We'll email <strong className="text-foreground">{applicantEmail}</strong> with a link to the driver app,
             where you'll finish your profile — vehicle, license, insurance and the background check.
           </p>
+          <p className="text-sm font-semibold text-foreground mb-3">Get the app now, so it's ready when the email arrives:</p>
+          <StoreButtons className="justify-center mb-8" />
           <button
             onClick={() => { setSubmitted(false); setForm(EMPTY) }}
             className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
@@ -280,7 +284,10 @@ export function DriversPage() {
               <Smartphone size={15} className="text-primary flex-shrink-0 mt-0.5" />
               <p className="text-xs text-muted-foreground leading-relaxed">
                 <strong className="text-foreground">The rest happens in the app.</strong> Vehicle, license, insurance,
-                document photos and the background check are all completed in the Pickup Runner driver app.
+                document photos and the background check are all completed in the Pickup Runner driver app — get it on the{' '}
+                <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">App Store</a>
+                {' '}or{' '}
+                <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">Google Play</a>.
               </p>
             </div>
           </form>

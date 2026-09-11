@@ -55,7 +55,28 @@ New endpoints belong here, following the same shape.
 **Admin auth lives entirely in `src/pages/AdminPage.tsx`.** It persists the session to
 `sessionStorage` under `pickuprunner_admin_session`, rehydrates it into `apiSession` on mount, and
 registers `apiSession.onRefreshed` / `onExpired` to keep storage in sync and log out on expiry.
-Panels (`src/components/AdminPanels.tsx`) receive the token as a prop and call `adminApi` directly.
+
+**Every admin screen has its own URL.** `AdminPage` is a layout route (sign-in form, header, tab
+links, `<Outlet />`); `App.tsx` nests the sections under it:
+
+| List | Detail |
+|---|---|
+| `/admin/orders?status=&q=` | `/admin/orders/$orderId` |
+| `/admin/customers?q=` | `/admin/customers/$customerId` |
+| `/admin/drivers?q=` | `/admin/drivers/$driverId` |
+| `/admin/applications?status=` | `/admin/applications/$userId` |
+| `/admin/accounts?role=` | `/admin/accounts/$userId` |
+
+`/admin` redirects to `/admin/orders`. List filters live in the query string (validated by
+`validateSearch` in `App.tsx`) so Back from a detail page restores them. Screens read the token
+from `AdminContext` via `useAdmin()` and register their reload for the header's Refresh button with
+`useRegisterReload()`. Files: `components/AdminUi.tsx` (context, shared cards/badges/fields,
+`useAdminData`), `components/AdminPanels.tsx` (list screens), `components/AdminDetails.tsx` (detail
+screens), `components/AdminQuickCheck.tsx` (the "Approve driver" quick-check popup on the
+applications list, plus `approveBlockers`, the approve rule shared with the list card). Images: profile photos are public URLs (`<Avatar>`); delivery photos and driver documents
+live in private buckets, so `<SignedImage>` fetches a short-lived signed link (`deliveryApi.photo`,
+`accreditationsApi.document`) and shows it inline — never render the stored path. Components read route params/search with `getRouteApi('<route id>')`, not by importing
+route objects from `App.tsx` (that would be a circular import).
 
 **Data fetching is hand-rolled.** Despite being installed, `@tanstack/react-query`,
 `react-hook-form`, `zod`, `react-hot-toast`, `framer-motion`, `recharts`, `@dnd-kit`, and

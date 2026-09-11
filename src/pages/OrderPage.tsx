@@ -1,7 +1,8 @@
 import { Link } from '@tanstack/react-router'
+import { StoreButtons } from '../components/StoreButtons'
 import {
-  Apple, BadgeCheck, Bell, Boxes, Camera, Car, CheckCircle2, ChevronRight, Clock,
-  CreditCard, FileText, Gift, Info, KeyRound, MapPin, Navigation, PackageX,
+  BadgeCheck, Boxes, Camera, Car, CheckCircle2, ChevronRight, Clock,
+  CreditCard, FileText, Gift, Info, KeyRound, MapPin, Navigation,
   Receipt, Shield, Smartphone, Undo2, Wallet,
 } from 'lucide-react'
 
@@ -9,32 +10,6 @@ const SUPPORT_EMAIL = 'pickuprunner13@gmail.com'
 
 const BLUE = '#0066FF'
 const YELLOW = '#F5C400'
-
-function StoreButton({ platform, sub, icon }: { platform: string; sub: string; icon: React.ReactNode }) {
-  return (
-    <div
-      className="flex items-center gap-4 px-6 py-4 rounded-2xl border border-border opacity-70 select-none"
-      style={{ background: 'hsl(237 40% 6%)' }}
-    >
-      <div
-        className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-        style={{ background: 'hsl(217 100% 50% / 0.15)', border: '1px solid hsl(217 100% 50% / 0.3)' }}
-      >
-        {icon}
-      </div>
-      <div className="text-left">
-        <p className="text-xs text-muted-foreground">{sub}</p>
-        <p className="text-lg font-bold text-foreground">{platform}</p>
-      </div>
-      <span
-        className="ml-2 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
-        style={{ background: 'hsl(47 100% 48% / 0.12)', border: '1px solid hsl(47 100% 48% / 0.3)', color: YELLOW }}
-      >
-        Coming soon
-      </span>
-    </div>
-  )
-}
 
 function SectionHeading({ eyebrow, title, children }: { eyebrow: string; title: string; children?: React.ReactNode }) {
   return (
@@ -120,8 +95,8 @@ const FAQ = [
     a: 'Up to about 15 miles between pickup and drop-off, seven days a week. Most sends are completed in under 45 minutes. Coverage widens as more runners join your area.',
   },
   {
-    q: 'When does the app launch?',
-    a: `We are in the final stretch of testing. Email ${SUPPORT_EMAIL} with your city and we will tell you the day it goes live near you.`,
+    q: 'Where do I get the app?',
+    a: 'Pickup Runner is free on the App Store for iPhone and on Google Play for Android — use the buttons at the top of this page, or search "Pickup Runner" in your store.',
   },
 ]
 
@@ -150,20 +125,17 @@ export function OrderPage() {
 
           <p className="text-lg text-muted-foreground leading-relaxed mb-10">
             Pickup Runner moves your things from one address to another — documents, parcels, the keys you left on
-            the counter. You book it in our mobile app, not on the web. We are putting the last touches on it now.
+            the counter. You book it in our mobile app, not on the web. It's free on iPhone and Android.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
-            <StoreButton platform="App Store" sub="Coming to the" icon={<Apple size={22} className="text-primary" />} />
-            <StoreButton platform="Google Play" sub="Coming to" icon={<Smartphone size={22} className="text-primary" />} />
-          </div>
+          <StoreButtons variant="large" className="mb-6" />
 
           <p className="text-sm text-muted-foreground">
-            Want to know the moment it launches?{' '}
-            <a href={`mailto:${SUPPORT_EMAIL}?subject=Notify%20me%20when%20the%20app%20launches`} className="text-primary hover:underline font-medium">
+            Not in our area yet?{' '}
+            <a href={`mailto:${SUPPORT_EMAIL}?subject=Tell%20me%20when%20Pickup%20Runner%20reaches%20my%20city`} className="text-primary hover:underline font-medium">
               Email us your city
             </a>
-            .
+            {' '}and we'll tell you when runners arrive near you.
           </p>
         </div>
       </section>
@@ -380,24 +352,18 @@ export function OrderPage() {
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border mb-6"
             style={{ background: 'hsl(47 100% 48% / 0.12)', borderColor: 'hsl(47 100% 48% / 0.3)', color: YELLOW }}
           >
-            <Bell size={12} />Launching soon
+            <Smartphone size={12} />Out now
           </div>
 
-          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">Be first in line.</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">Get the app.</h2>
 
           <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed">
-            Send us your city and we will tell you the day Pickup Runner goes live near you — before the app hits the stores.
+            Download Pickup Runner free on iPhone or Android and book your first send in a couple of minutes.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <a
-              href={`mailto:${SUPPORT_EMAIL}?subject=Notify%20me%20when%20the%20app%20launches`}
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-base transition-all duration-200 hover:scale-105 active:scale-95 pr-glow-yellow"
-              style={{ background: YELLOW, color: '#0A0A0F' }}
-            >
-              <Bell size={18} />Notify me at launch
-            </a>
+          <StoreButtons variant="large" className="mb-4" />
 
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               to="/drivers"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-base border border-border text-foreground hover:bg-muted transition-all duration-200"

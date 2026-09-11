@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router'
-import { ShoppingCart, Car, MapPin, Clock, Shield, Star, ChevronRight, Smartphone, CheckCircle2, Package, Truck, Home } from 'lucide-react'
+import { StoreButtons } from '../components/StoreButtons'
+import { ShoppingCart, Car, MapPin, Clock, Shield, Star, ChevronRight, CheckCircle2, Package, Truck, Home } from 'lucide-react'
 
 export function HomePage() {
   return (
@@ -36,18 +37,7 @@ export function HomePage() {
                   <Car size={18} />Become a Driver<ChevronRight size={16} className="ml-1" />
                 </Link>
               </div>
-              <div className="flex flex-col sm:flex-row gap-3">
-                {[{ label: 'App Store', sub: 'Download on the' }, { label: 'Google Play', sub: 'Get it on' }].map(({ label, sub }) => (
-                  <a key={label} href="#"
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-primary/50 hover:bg-muted transition-all duration-200 group">
-                    <Smartphone size={20} className="text-foreground group-hover:text-primary transition-colors" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">{sub}</p>
-                      <p className="text-sm font-semibold text-foreground">{label}</p>
-                    </div>
-                  </a>
-                ))}
-              </div>
+              <StoreButtons />
             </div>
 
             <div className="relative flex justify-center lg:justify-end">
