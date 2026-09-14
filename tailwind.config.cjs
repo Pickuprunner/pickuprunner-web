@@ -25,7 +25,6 @@ module.exports = {
         card:    'var(--shadow-card)',
       },
 
-      // ── Font families — resolve to per-theme CSS vars ─────────────────────
       fontFamily: {
         sans:    'var(--font-sans)',
         heading: 'var(--font-heading)',
@@ -33,7 +32,6 @@ module.exports = {
         serif:   ['Georgia', 'serif'],
       },
 
-      // ── Font sizes ─────────────────────────────────────────────────────────
       fontSize: {
         xs:   ['var(--font-size-xs)',   { lineHeight: 'var(--line-height-tight)' }],
         sm:   ['var(--font-size-sm)',   { lineHeight: 'var(--line-height-normal)' }],
@@ -43,7 +41,6 @@ module.exports = {
         '2xl':['var(--font-size-2xl)',  { lineHeight: 'var(--line-height-heading)' }],
       },
 
-      // ── Colors ─────────────────────────────────────────────────────────────
       colors: {
         border:     'hsl(var(--border))',
         input:      'hsl(var(--input))',
@@ -97,7 +94,6 @@ module.exports = {
         },
       },
 
-      // ── Transitions ────────────────────────────────────────────────────────
       transitionDuration: {
         fast:    'var(--duration-fast)',
         DEFAULT: 'var(--duration-normal)',
@@ -109,7 +105,6 @@ module.exports = {
         bounce:  'var(--easing-bounce)',
       },
 
-      // ── Animations ─────────────────────────────────────────────────────────
       animation: {
         'fade-in':       'fade-in 0.5s ease-out',
         'slide-up':      'slide-up 0.5s ease-out',

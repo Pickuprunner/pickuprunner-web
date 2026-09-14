@@ -1,16 +1,25 @@
-import { Apple, Play } from 'lucide-react'
+import appStoreMark from 'simple-icons/icons/appstore.svg?raw'
+import googlePlayMark from 'simple-icons/icons/googleplay.svg?raw'
 
 import { APP_STORES } from '../lib/appStores'
 
-const ICONS = { ios: Apple, android: Play } as const
+const ICONS = { ios: appStoreMark, android: googlePlayMark } as const
 
-/**
- * "Download on the App Store" / "Get it on Google Play", linking to the real
- * store pages in a new tab.
- *
- *   compact — small bordered buttons (home hero, footer, inline notes)
- *   large   — big tiles with an icon box (the order page hero and CTA)
- */
+function StoreIcon({ mark, size, className = '' }: {
+  mark: string
+  size: number
+  className?: string
+}) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`inline-flex flex-shrink-0 [&>svg]:h-full [&>svg]:w-full [&>svg]:fill-current ${className}`}
+      style={{ width: size, height: size }}
+      dangerouslySetInnerHTML={{ __html: mark }}
+    />
+  )
+}
+
 export function StoreButtons({ variant = 'compact', className = '' }: {
   variant?: 'compact' | 'large'
   className?: string
@@ -18,7 +27,7 @@ export function StoreButtons({ variant = 'compact', className = '' }: {
   return (
     <div className={`flex flex-col sm:flex-row gap-3 ${variant === 'large' ? 'sm:gap-4 justify-center' : ''} ${className}`}>
       {APP_STORES.map(({ key, label, sub, url }) => {
-        const Icon = ICONS[key]
+        const mark = ICONS[key]
 
         if (variant === 'large') {
           return (
@@ -35,7 +44,7 @@ export function StoreButtons({ variant = 'compact', className = '' }: {
                 className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ background: 'hsl(217 100% 50% / 0.15)', border: '1px solid hsl(217 100% 50% / 0.3)' }}
               >
-                <Icon size={22} className="text-primary" />
+                <StoreIcon mark={mark} size={22} className="text-primary" />
               </div>
               <div className="text-left">
                 <p className="text-xs text-muted-foreground">{sub}</p>
@@ -54,7 +63,7 @@ export function StoreButtons({ variant = 'compact', className = '' }: {
             aria-label={`${sub} ${label}`}
             className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-primary/50 hover:bg-muted transition-all duration-200 group"
           >
-            <Icon size={20} className="text-foreground group-hover:text-primary transition-colors" />
+            <StoreIcon mark={mark} size={20} className="text-foreground group-hover:text-primary transition-colors" />
             <div>
               <p className="text-xs text-muted-foreground">{sub}</p>
               <p className="text-sm font-semibold text-foreground">{label}</p>

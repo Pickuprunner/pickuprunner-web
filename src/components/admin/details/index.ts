@@ -1,0 +1,5 @@
+export { OrderDetailPage } from './OrderDetailPage'
+export { CustomerDetailPage } from './CustomerDetailPage'
+export { DriverDetailPage } from './DriverDetailPage'
+export { ApplicationDetailPage } from './ApplicationDetailPage'
+export { AccountDetailPage } from './AccountDetailPage'

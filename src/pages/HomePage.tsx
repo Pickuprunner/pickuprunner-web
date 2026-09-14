@@ -212,23 +212,28 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="py-20 mx-4 sm:mx-6 mb-12 rounded-3xl overflow-hidden relative"
-        style={{ background: 'linear-gradient(135deg, hsl(217 100% 14%) 0%, hsl(240 67% 8%) 100%)', border: '1px solid hsl(217 100% 30% / 0.4)' }}>
-        <div className="absolute inset-0 pr-grid-bg opacity-30" />
-        <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border mb-6"
-            style={{ background: 'hsl(47 100% 48% / 0.12)', borderColor: 'hsl(47 100% 48% / 0.3)', color: '#F5C400' }}>
-            <Car size={12} />Drivers needed in your area
+      
+      <section className="py-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="relative overflow-hidden rounded-3xl py-16 sm:py-20"
+            style={{ background: 'linear-gradient(135deg, hsl(217 100% 14%) 0%, hsl(240 67% 8%) 100%)', border: '1px solid hsl(217 100% 30% / 0.4)' }}>
+            <div className="absolute inset-0 pr-grid-bg opacity-30" />
+            <div className="relative z-10 max-w-2xl mx-auto px-6 text-center">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border mb-6"
+                style={{ background: 'hsl(47 100% 48% / 0.12)', borderColor: 'hsl(47 100% 48% / 0.3)', color: '#F5C400' }}>
+                <Car size={12} />Drivers needed in your area
+              </div>
+              <h2 className="text-4xl sm:text-5xl font-bold text-foreground mb-4">Earn on your schedule.</h2>
+              <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
+                Set your own hours. Make deliveries when it works for you. Competitive pay per mile with cash tips.
+              </p>
+              <Link to="/drivers"
+                className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-semibold text-base transition-all duration-200 hover:scale-105 active:scale-95 pr-glow-yellow"
+                style={{ background: '#F5C400', color: '#0A0A0F' }}>
+                <Car size={18} />Apply to Drive<ChevronRight size={16} />
+              </Link>
+            </div>
           </div>
-          <h2 className="text-4xl sm:text-5xl font-bold text-foreground mb-4">Earn on your schedule.</h2>
-          <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
-            Set your own hours. Make deliveries when it works for you. Competitive pay per mile with cash tips.
-          </p>
-          <Link to="/drivers"
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-semibold text-base transition-all duration-200 hover:scale-105 active:scale-95 pr-glow-yellow"
-            style={{ background: '#F5C400', color: '#0A0A0F' }}>
-            <Car size={18} />Apply to Drive<ChevronRight size={16} />
-          </Link>
         </div>
       </section>
     </div>

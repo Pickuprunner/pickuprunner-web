@@ -17,6 +17,7 @@ npm run preview          # serve the production build
 
 npm run lint:types       # tsc --noEmit — the type check that actually works
 npm run lint:css         # stylelint --fix on src/**/*.css
+npm run lint             # both of the above
 
 npm run preview:cf       # build, then serve through wrangler dev (local Workers runtime)
 npm run deploy           # vite build && wrangler deploy
@@ -24,9 +25,7 @@ npm run deploy           # vite build && wrangler deploy
 
 There are no tests and no test runner.
 
-**Broken scripts:** `lint:js` invokes eslint, which is not a dependency and has no config file;
-`lint` chains the sub-scripts through `bun run`, and bun is not installed. Run `lint:types` and
-`lint:css` directly instead of `npm run lint`.
+`npm run lint` runs the type check and stylelint. There is no eslint in this project.
 
 ## Architecture
 
@@ -37,7 +36,7 @@ nothing until it is wired into the route tree in `App.tsx`. `src/main.tsx` mount
 `QueryClientProvider` and force-enables dark mode with
 `document.documentElement.classList.add('dark')`.
 
-**All server access goes through `src/lib/api.ts`.** Base URL is `VITE_API_URL` (default
+**All server access goes through `src/lib/api/`.** Base URL is `VITE_API_URL` (default
 `http://localhost:8080`). That module owns:
 
 - a module-level token store (`session`) — not React state, not context;
@@ -70,19 +69,17 @@ links, `<Outlet />`); `App.tsx` nests the sections under it:
 `/admin` redirects to `/admin/orders`. List filters live in the query string (validated by
 `validateSearch` in `App.tsx`) so Back from a detail page restores them. Screens read the token
 from `AdminContext` via `useAdmin()` and register their reload for the header's Refresh button with
-`useRegisterReload()`. Files: `components/AdminUi.tsx` (context, shared cards/badges/fields,
-`useAdminData`), `components/AdminPanels.tsx` (list screens), `components/AdminDetails.tsx` (detail
-screens), `components/AdminQuickCheck.tsx` (the "Approve driver" quick-check popup on the
-applications list, plus `approveBlockers`, the approve rule shared with the list card). Images: profile photos are public URLs (`<Avatar>`); delivery photos and driver documents
+`useRegisterReload()`. Files: `components/admin/ui/` (context, shared cards/badges/fields,
+`useAdminData`), `components/admin/panels/` (list screens), `components/admin/details/` (detail
+screens). Images: profile photos are public URLs (`<Avatar>`); delivery photos and driver documents
 live in private buckets, so `<SignedImage>` fetches a short-lived signed link (`deliveryApi.photo`,
 `accreditationsApi.document`) and shows it inline — never render the stored path. Components read route params/search with `getRouteApi('<route id>')`, not by importing
 route objects from `App.tsx` (that would be a circular import).
 
-**Data fetching is hand-rolled.** Despite being installed, `@tanstack/react-query`,
-`react-hook-form`, `zod`, `react-hot-toast`, `framer-motion`, `recharts`, `@dnd-kit`, and
-`@react-three/*` are not imported anywhere in `src/`. Pages use `useState` plus async submit
-handlers with local `loading`/`error` state. Match that pattern unless deliberately introducing a
-library.
+**Data fetching is hand-rolled.** `@tanstack/react-query` is installed and the provider is
+mounted, but nothing uses it: pages use `useState` plus async submit handlers with local
+`loading`/`error` state, and admin screens use `useAdminData`. Match that pattern unless
+deliberately introducing a library. `react-hot-toast` is used for the admin's confirmations.
 
 ## Styling
 
@@ -98,11 +95,35 @@ palette is currently unreachable. Marketing pages also hardcode inline `style` c
 The classes `pr-glow-blue`, `pr-glow-yellow`, `pr-grid-bg`, and `pr-text-gradient` are used in JSX
 but defined nowhere; they are currently no-ops.
 
-## Dead scaffolding
+## Where things live
 
-Leftovers from the Vite starter and an abandoned sidebar layout, none of them reachable from
-`main.tsx`: `src/main.ts`, `src/counter.ts`, `src/style.css`, `src/Shell.tsx`,
-`src/layouts/shared-app-layout.tsx`, `src/components/AppSidebarShell.tsx`.
+```
+src/
+  App.tsx                    the whole route tree, by hand
+  components/
+    admin/ui/                context + hooks, formatting, badges, cards, images, eligibility
+    admin/panels/            one file per list screen, plus ReviewActions and the filters
+    admin/details/           one file per detail screen, plus the shared pieces
+    admin/quick-check/       the Approve driver popup and the rule behind it
+    forms/ marketing/        the shared text field, the section heading
+  lib/api/                   client (fetch, token, refresh), types, auth, public, admin
+  lib/brand.ts               support address and brand colours
+  pages/<page>/              a page, its sections, and its copy
+```
+
+Each folder has an `index.ts`, so screens keep importing `from '../ui'` or `from './pages/order'`
+rather than reaching into files.
+
+**The admin is a separate download.** `App.tsx` pulls it in with `lazyRouteComponent`, so a visitor
+reading the marketing pages never fetches the admin console. Only `components/admin/panels/filters`
+is imported eagerly, because `validateSearch` runs before a screen is drawn. Keep it that way: an
+ordinary `import` of an admin screen in `App.tsx` puts the whole console back in the first download.
+
+**Dependencies are the ones actually imported.** The Vite starter's leftovers (`src/main.ts`,
+`counter.ts`, `style.css`, `Shell.tsx`, the abandoned sidebar layout) and eleven never-imported
+packages (framer-motion, recharts, @react-three/*, @dnd-kit/core, react-hook-form, zod, date-fns,
+react-responsive, glob, clsx, tailwind-merge) were removed on 2026-09-14. Build-time tools live in
+`devDependencies`.
 
 ## Cloudflare deployment
 

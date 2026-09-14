@@ -1,34 +1,44 @@
-import { createRouter, createRoute, createRootRoute, RouterProvider, Outlet, redirect } from '@tanstack/react-router'
+import {
+  createRouter,
+  createRoute,
+  createRootRoute,
+  lazyRouteComponent,
+  RouterProvider,
+  Outlet,
+  redirect,
+} from '@tanstack/react-router'
 import { Navbar } from './components/Navbar'
 import { Footer } from './components/Footer'
 import { HomePage } from './pages/HomePage'
-import { DriversPage } from './pages/DriversPage'
-import { OrderPage } from './pages/OrderPage'
+import { DriversPage } from './pages/drivers'
+import { OrderPage } from './pages/order'
 import { PrivacyPage } from './pages/PrivacyPage'
 import { TermsPage } from './pages/TermsPage'
-import { AdminPage } from './pages/AdminPage'
+
 import {
   ACCOUNT_ROLES,
-  AccountsPanel,
   APPLICATION_STATUSES,
-  ApplicationsPanel,
-  CustomersPanel,
-  DriversPanel,
   ORDER_STATUSES,
-  OrdersPanel,
   type AccountFilter,
   type ApplicationFilter,
   type OrderFilter,
-} from './components/AdminPanels'
-import {
-  AccountDetailPage,
-  ApplicationDetailPage,
-  CustomerDetailPage,
-  DriverDetailPage,
-  OrderDetailPage,
-} from './components/AdminDetails'
-import { DeleteProfilePage } from './pages/DeleteProfilePage'
-import { ContactPage } from './pages/ContactPage'
+} from './components/admin/panels/filters'
+
+const AdminPage = lazyRouteComponent(() => import('./pages/admin'), 'AdminPage')
+const panels = () => import('./components/admin/panels')
+const OrdersPanel = lazyRouteComponent(panels, 'OrdersPanel')
+const CustomersPanel = lazyRouteComponent(panels, 'CustomersPanel')
+const DriversPanel = lazyRouteComponent(panels, 'DriversPanel')
+const ApplicationsPanel = lazyRouteComponent(panels, 'ApplicationsPanel')
+const AccountsPanel = lazyRouteComponent(panels, 'AccountsPanel')
+const details = () => import('./components/admin/details')
+const OrderDetailPage = lazyRouteComponent(details, 'OrderDetailPage')
+const CustomerDetailPage = lazyRouteComponent(details, 'CustomerDetailPage')
+const DriverDetailPage = lazyRouteComponent(details, 'DriverDetailPage')
+const ApplicationDetailPage = lazyRouteComponent(details, 'ApplicationDetailPage')
+const AccountDetailPage = lazyRouteComponent(details, 'AccountDetailPage')
+import { DeleteProfilePage } from './pages/delete-profile'
+import { ContactPage } from './pages/contact'
 import { NotFoundPage } from './pages/NotFoundPage'
 
 declare module '@tanstack/react-router' {
@@ -89,10 +99,6 @@ const contactRoute = createRoute({
   component: ContactPage,
 })
 
-// ── Admin ───────────────────────────────────────────────────────────────────
-// AdminPage is the layout (sign-in, header, tabs); every section is a child
-// route with its own URL, and each list has a detail route for one record.
-
 const adminRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/admin',
@@ -107,8 +113,6 @@ const adminIndexRoute = createRoute({
   },
 })
 
-// List filters are kept in the query string so Back restores them. Anything
-// unrecognised is dropped rather than trusted.
 const text = (value: unknown) =>
   typeof value === 'string' && value.trim() ? value.trim().slice(0, 200) : undefined
 
