@@ -151,7 +151,7 @@ export function PrivacyPage() {
         </p>
         <ul className="list-none mt-3 space-y-1">
           <li>Email: <a href="mailto:pickuprunner13@gmail.com" className="text-primary hover:underline">pickuprunner13@gmail.com</a></li>
-          <li>Website: <a href="https://www.pickuprunner.net" className="text-primary hover:underline">www.pickuprunner.net</a></li>
+          <li>Website: <a href="https://pickuprunner.net/" className="text-primary hover:underline">www.pickuprunner.net</a></li>
         </ul>
       </Section>
     </div>

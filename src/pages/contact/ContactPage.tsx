@@ -13,7 +13,7 @@ export function ContactPage() {
         <div className="absolute inset-0 pr-grid-bg opacity-20" />
         <div
           className="absolute top-1/2 left-1/2 w-[760px] h-[520px] -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse, hsl(217 100% 50% / 0.10) 0%, transparent 68%)' }}
+          style={{ background: 'radial-gradient(ellipse, hsl(217 100% 50% / 0.10) 0%, transparent 50%)' }}
         />
         <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 text-center">
           <div

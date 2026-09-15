@@ -35,4 +35,16 @@ export const usersApi = {
       { method: 'PATCH', body: JSON.stringify({ status }) },
       token,
     ),
+  deleteCustomer: (token: string, userId: string) =>
+    request<{ userId: string }>(
+      '/admin/customers/' + encodeURIComponent(userId),
+      { method: 'DELETE' },
+      token,
+    ),
+  deleteDriver: (token: string, userId: string) =>
+    request<{ userId: string }>(
+      '/admin/drivers/' + encodeURIComponent(userId),
+      { method: 'DELETE' },
+      token,
+    ),
 }

@@ -57,7 +57,7 @@ function AccountRow({ user, token, reload }: { user: AdminUser; token: string; r
         </div>
 
         <div className="relative z-10 focus-within:z-20">
-          <AccountControls user={user} token={token} onChanged={reload} />
+          <AccountControls user={user} name={user.displayName || user.email} token={token} onChanged={reload} />
         </div>
       </div>
 

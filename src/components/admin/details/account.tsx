@@ -47,7 +47,7 @@ export function AccountFields({ account, single = false, compact = false }: {
 }
 
 export function HeaderActions({ account, onChanged, children }: {
-  account: { id: string; role: Role; status: AccountStatus; deletedAt?: string | null }
+  account: { id: string; role: Role; status: AccountStatus; displayName?: string | null; email?: string | null; deletedAt?: string | null }
   onChanged: () => void
   children?: React.ReactNode
 }) {
@@ -59,7 +59,7 @@ export function HeaderActions({ account, onChanged, children }: {
   return (
     <div className="flex flex-wrap items-start gap-2 sm:justify-end">
       {children}
-      {canManage && <AccountControls user={account} token={token} onChanged={onChanged} />}
+      {canManage && <AccountControls user={account} name={account.displayName || account.email || 'this account'} token={token} onChanged={onChanged} />}
     </div>
   )
 }
