@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { Zap } from 'lucide-react'
+import { BRAND_ICON } from '../lib/brand'
 import { StoreButtons } from './StoreButtons'
 
 export function Footer() {
@@ -9,9 +9,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center pr-glow-blue">
-                <Zap size={16} className="text-primary-foreground" />
-              </div>
+              <img src={BRAND_ICON} alt="" width={32} height={32} className="w-8 h-8 rounded-lg" />
               <span className="font-bold text-lg tracking-tight text-foreground">
                 Pickup <span style={{ color: '#F5C400' }}>Runner</span>
               </span>
@@ -25,6 +23,8 @@ export function Footer() {
           <div>
             <h2 className="text-sm font-semibold text-foreground mb-3">Service</h2>
             <ul className="space-y-2">
+              <li><Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">About Pickup Runner</Link></li>
+              <li><Link to="/download" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Download the Official App</Link></li>
               <li><Link to="/" hash="how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors">How It Works</Link></li>
               <li><Link to="/" hash="pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</Link></li>
               <li><Link to="/" hash="coverage" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Coverage Area</Link></li>

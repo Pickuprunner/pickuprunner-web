@@ -1,9 +1,21 @@
 {
   "/": {
-    "title": "Pickup Runner | Local Pickup & Delivery App",
-    "description": "Book local pickup and delivery for prepaid items with Pickup Runner. Collect store orders and send parcels with local drivers. Get the iPhone or Android app.",
+    "title": "Pickup Runner | Official Pickup & Delivery App",
+    "description": "Pickup Runner connects you with local drivers for prepaid pickups and delivery in select U.S. cities. Get the official iPhone or Android app and track your runner.",
     "label": "Pickup Runner",
     "type": "WebPage"
+  },
+  "/about": {
+    "title": "About Pickup Runner | Prepaid Pickup & Local Delivery",
+    "description": "Meet Pickup Runner, the local pickup and delivery app operated by Pickup Runner LLC. Learn about prepaid pickups, U.S. availability and our official apps.",
+    "label": "About Pickup Runner",
+    "type": "AboutPage"
+  },
+  "/download": {
+    "title": "Download Pickup Runner | Official iPhone & Android App",
+    "description": "Download Pickup Runner: Local Delivery from the App Store or Google Play. Find the official app from Pickup Runner LLC for customers and delivery drivers.",
+    "label": "Download the app",
+    "type": "CollectionPage"
   },
   "/order": {
     "title": "Local Courier & Delivery App | Pickup Runner",

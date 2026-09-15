@@ -1,11 +1,11 @@
 import pages from './site-pages.json'
 import { APP_STORE_URL, PLAY_STORE_URL } from './appStores'
-import { SUPPORT_EMAIL } from './brand'
+import { SUPPORT_EMAIL, BRAND_ICON, SERVICE_DESCRIPTION } from './brand'
 import { FAQ } from '../pages/order/content'
 
 export const SITE_URL = 'https://pickuprunner.net'
 export const PUBLIC_PATHS = Object.keys(pages)
-export const SERVICE_DESCRIPTION = 'Pickup Runner connects customers with local drivers to collect and deliver prepaid items. Book a pickup and track your runner in the iPhone or Android app.'
+export { SERVICE_DESCRIPTION } from './brand'
 
 const escapeHtml = (value: string) => value.replace(/[&<>"']/g, char => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -35,10 +35,13 @@ export function structuredData(pathname: string) {
   const organizationId = SITE_URL + '/#organization'
   const websiteId = SITE_URL + '/#website'
   const serviceId = SITE_URL + '/#delivery-service'
+  const appIds = ['ios', 'android'].map(platform => ({ '@id': SITE_URL + '/#app-' + platform }))
   const graph: Record<string, unknown>[] = [
     {
       '@type': 'Organization', '@id': organizationId,
       name: 'Pickup Runner', legalName: 'Pickup Runner LLC', url: SITE_URL + '/',
+      alternateName: 'PickupRunner', description: SERVICE_DESCRIPTION,
+      logo: { '@type': 'ImageObject', '@id': SITE_URL + '/#logo', url: SITE_URL + BRAND_ICON, contentUrl: SITE_URL + BRAND_ICON, width: 512, height: 512 },
       email: SUPPORT_EMAIL,
       sameAs: [APP_STORE_URL, PLAY_STORE_URL],
       contactPoint: { '@type': 'ContactPoint', contactType: 'customer support', email: SUPPORT_EMAIL, url: SITE_URL + '/contact' },
@@ -48,6 +51,10 @@ export function structuredData(pathname: string) {
       '@type': page.type, '@id': page.canonical + '#webpage', url: page.canonical,
       name: page.title, description: page.description, inLanguage: 'en',
       isPartOf: { '@id': websiteId }, publisher: { '@id': organizationId },
+      about: { '@id': organizationId },
+      ...(page.path === '/about' ? { mainEntity: { '@id': organizationId } } : {}),
+      ...(page.path === '/' || page.path === '/order' ? { mainEntity: { '@id': serviceId } } : {}),
+      ...(page.path === '/download' ? { mainEntity: appIds } : {}),
       ...(page.path !== '/' ? { breadcrumb: { '@id': page.canonical + '#breadcrumb' } } : {}),
     },
   ]
@@ -58,7 +65,7 @@ export function structuredData(pathname: string) {
       { '@type': 'ListItem', position: 2, name: page.label, item: page.canonical },
     ],
   })
-  if (page.path === '/' || page.path === '/order') {
+  if (['/', '/order', '/about', '/download'].includes(page.path)) {
     graph.push({
       '@type': 'Service', '@id': serviceId, name: 'Pickup Runner local pickup and delivery',
       serviceType: 'Local pickup and delivery', description: SERVICE_DESCRIPTION,
@@ -67,9 +74,10 @@ export function structuredData(pathname: string) {
     for (const [operatingSystem, installUrl, suffix] of [['iOS', APP_STORE_URL, 'ios'], ['Android', PLAY_STORE_URL, 'android']]) {
       graph.push({
         '@type': 'MobileApplication', '@id': SITE_URL + '/#app-' + suffix,
-        name: 'Pickup Runner', operatingSystem, installUrl, url: SITE_URL + '/order',
+        name: 'Pickup Runner: Local Delivery', alternateName: 'Pickup Runner', operatingSystem, installUrl, url: SITE_URL + '/download',
         applicationCategory: 'BusinessApplication', description: SERVICE_DESCRIPTION,
-        publisher: { '@id': organizationId },
+        image: SITE_URL + BRAND_ICON, publisher: { '@id': organizationId },
+        about: { '@id': serviceId },
       })
     }
   }

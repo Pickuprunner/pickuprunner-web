@@ -59,9 +59,39 @@ test('every internal public link points to a built page and any anchor exists', 
     const html = textFor(path)
     for (const match of html.matchAll(/href="(\/[^"<>]*)"/g)) {
       const url = new URL(match[1].replace(/&amp;/g, '&'), 'https://pickuprunner.net')
-      if (url.pathname.startsWith('/assets/') || url.pathname === '/favicon.svg') continue
+      if (url.pathname.startsWith('/assets/') || /\.(?:svg|jpg|png)$/.test(url.pathname)) {
+        assert.ok(files.has(url.pathname), `Missing asset ${url.pathname}`)
+        continue
+      }
       assert.ok(pages[url.pathname], `Broken link ${path} -> ${url.pathname}`)
       if (url.hash) assert.ok(textFor(url.pathname).includes(`id="${url.hash.slice(1)}"`), `Missing anchor ${match[1]}`)
+    }
+  }
+})
+
+test('brand and app identity are visible without JavaScript and use the official icon and listings', () => {
+  const home = textFor('/')
+  assert.match(home.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/)[1], /Pickup Runner/)
+  assert.match(home, /data-nosnippet=""/)
+  for (const path of ['/about', '/download']) {
+    const html = textFor(path)
+    const body = html.slice(html.indexOf('<body>'))
+    assert.ok(body.includes('Pickup Runner LLC'), path)
+    assert.ok(body.includes('Pickup Runner: Local Delivery'), path)
+    assert.ok(body.includes('id6807306109'), path)
+    assert.ok(body.includes('id=com.pickuprunner'), path)
+    assert.match(body, /prepaid|already be paid for/)
+    assert.match(body, /select U\.S\. cities|select cities in the United States/)
+    const graph = JSON.parse(html.match(/<script data-seo type="application\/ld\+json">([\s\S]*?)<\/script>/)[1])['@graph']
+    const org = graph.find(item => item['@type'] === 'Organization')
+    const logoPath = new URL(org.logo.url).pathname
+    assert.ok(files.get(logoPath).length > 1000)
+    assert.ok(html.includes(`rel="icon" type="image/jpeg" sizes="512x512" href="${logoPath}"`))
+    for (const app of graph.filter(item => item['@type'] === 'MobileApplication')) {
+      assert.equal(app.publisher['@id'], org['@id'])
+      assert.ok(org.sameAs.includes(app.installUrl))
+      assert.equal(app.url, 'https://pickuprunner.net/download')
+      assert.ok(body.includes(app.name))
     }
   }
 })

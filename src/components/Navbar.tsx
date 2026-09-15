@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation } from '@tanstack/react-router'
-import { Menu, X, Zap } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
+import { BRAND_ICON } from '../lib/brand'
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -10,6 +11,7 @@ export function Navbar() {
     { label: 'Home', to: '/' },
     { label: 'Place Order', to: '/order' },
     { label: 'Drive With Us', to: '/drivers' },
+    { label: 'About', to: '/about' },
     { label: 'Contact Us', to: '/contact' },
   ]
   const isActive = (to: string) => location.pathname === to
@@ -21,9 +23,7 @@ export function Navbar() {
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 group">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center pr-glow-blue transition-all duration-200 group-hover:scale-110">
-            <Zap size={16} className="text-primary-foreground" />
-          </div>
+          <img src={BRAND_ICON} alt="" width={32} height={32} className="w-8 h-8 rounded-lg" />
           <span className="font-bold text-lg tracking-tight text-foreground">
             Pickup <span style={{ color: '#F5C400' }}>Runner</span>
           </span>

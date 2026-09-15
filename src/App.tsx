@@ -12,6 +12,8 @@ import { Seo, Breadcrumbs } from './components/Seo'
 import { Navbar } from './components/Navbar'
 import { Footer } from './components/Footer'
 import { HomePage } from './pages/HomePage'
+import { AboutPage } from './pages/AboutPage'
+import { DownloadPage } from './pages/DownloadPage'
 import { DriversPage } from './pages/drivers'
 import { OrderPage } from './pages/order'
 import { PrivacyPage } from './pages/PrivacyPage'
@@ -75,6 +77,9 @@ const orderRoute = createRoute({
   path: '/order',
   component: OrderPage,
 })
+
+const aboutRoute = createRoute({ getParentRoute: () => rootRoute, path: '/about', component: AboutPage })
+const downloadRoute = createRoute({ getParentRoute: () => rootRoute, path: '/download', component: DownloadPage })
 
 const driversRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -207,6 +212,8 @@ const adminAccountRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
+  aboutRoute,
+  downloadRoute,
   orderRoute,
   driversRoute,
   privacyRoute,

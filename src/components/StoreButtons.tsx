@@ -36,7 +36,7 @@ export function StoreButtons({ variant = 'compact', className = '' }: {
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label={`${sub} ${label}`}
+              aria-label={`Download Pickup Runner on ${label}`}
               className="group flex items-center gap-4 px-6 py-4 rounded-2xl border border-border hover:border-primary/60 transition-all duration-200 hover:scale-[1.02]"
               style={{ background: 'hsl(237 40% 6%)' }}
             >
@@ -60,7 +60,7 @@ export function StoreButtons({ variant = 'compact', className = '' }: {
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label={`${sub} ${label}`}
+            aria-label={`Download Pickup Runner on ${label}`}
             className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-primary/50 hover:bg-muted transition-all duration-200 group"
           >
             <StoreIcon mark={mark} size={20} className="text-foreground group-hover:text-primary transition-colors" />

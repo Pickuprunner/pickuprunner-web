@@ -19,10 +19,9 @@ export function HomePage() {
                 <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                 Pickup Runner · Local delivery app
               </div>
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold leading-[1.05] tracking-tight text-foreground mb-6">
-                Local pickup.<br />
-                <span className="pr-text-gradient">Door-to-door</span><br />
-                <span style={{ color: '#F5C400' }}>delivery.</span>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.08] tracking-tight text-foreground mb-6">
+                <span style={{ color: '#F5C400' }}>Pickup Runner.</span><br />
+                Local pickup &amp;<br />delivery.
               </h1>
               <p className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-lg">
                 {SERVICE_DESCRIPTION} Items must be paid for before collection; runners do not shop or pay for goods.
@@ -39,9 +38,13 @@ export function HomePage() {
                 </Link>
               </div>
               <StoreButtons />
+              <div className="flex flex-wrap gap-x-5 gap-y-2 mt-5 text-sm">
+                <Link to="/about" className="text-primary hover:underline">About Pickup Runner LLC</Link>
+                <Link to="/download" className="text-primary hover:underline">Find the official app</Link>
+              </div>
             </div>
 
-            <div aria-hidden="true" className="relative flex justify-center lg:justify-end">
+            <div aria-hidden="true" data-nosnippet="" className="relative flex justify-center lg:justify-end">
               <div className="relative">
                 <div className="absolute inset-0 rounded-[3rem] -m-4"
                   style={{ background: 'radial-gradient(circle, hsl(217 100% 50% / 0.2) 0%, transparent 70%)' }} />
@@ -191,7 +194,7 @@ export function HomePage() {
           <p className="text-xs font-semibold tracking-widest uppercase text-primary mb-3">Service Area</p>
           <h2 className="text-4xl font-bold text-foreground mb-4">Coverage Area</h2>
           <p className="text-lg text-muted-foreground mb-10 max-w-2xl mx-auto">
-            Pickup Runner is a local delivery service. Availability depends on your pickup address, drop-off address and available drivers. Contact our team with your city or ZIP code to confirm coverage before booking.
+            Pickup Runner operates in select U.S. cities. Availability depends on your pickup address, drop-off address and available drivers; coverage is not nationwide. Contact our team with your city or ZIP code to confirm coverage before booking.
           </p>
           <div className="grid sm:grid-cols-3 gap-6 mb-10">
             {[
