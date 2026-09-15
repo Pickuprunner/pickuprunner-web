@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router'
+import { SERVICE_DESCRIPTION } from '../lib/seo'
 import { StoreButtons } from '../components/StoreButtons'
 import { ShoppingCart, Car, MapPin, Clock, Shield, Star, ChevronRight, CheckCircle2, Package, Truck, Home } from 'lucide-react'
 
@@ -16,15 +17,15 @@ export function HomePage() {
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border mb-6"
                 style={{ background: 'hsl(217 100% 50% / 0.1)', borderColor: 'hsl(217 100% 50% / 0.3)', color: '#6699FF' }}>
                 <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                Now serving your neighborhood
+                Pickup Runner · Local delivery app
               </div>
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold leading-[1.05] tracking-tight text-foreground mb-6">
-                Groceries at<br />
-                <span className="pr-text-gradient">your door.</span><br />
-                <span style={{ color: '#F5C400' }}>Fast.</span>
+                Local pickup.<br />
+                <span className="pr-text-gradient">Door-to-door</span><br />
+                <span style={{ color: '#F5C400' }}>delivery.</span>
               </h1>
               <p className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-lg">
-                Pickup Runner delivers from your local grocery store or pharmacy directly to you. Transparent pricing, background-checked drivers, no hidden fees.
+                {SERVICE_DESCRIPTION} Items must be paid for before collection; runners do not shop or pay for goods.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 mb-10">
                 <Link to="/order"
@@ -40,7 +41,7 @@ export function HomePage() {
               <StoreButtons />
             </div>
 
-            <div className="relative flex justify-center lg:justify-end">
+            <div aria-hidden="true" className="relative flex justify-center lg:justify-end">
               <div className="relative">
                 <div className="absolute inset-0 rounded-[3rem] -m-4"
                   style={{ background: 'radial-gradient(circle, hsl(217 100% 50% / 0.2) 0%, transparent 70%)' }} />
@@ -100,10 +101,10 @@ export function HomePage() {
 
           <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
-              { value: '< 45 min', label: 'Average Delivery' },
+              { value: 'Live', label: 'Delivery Tracking' },
               { value: '100%', label: 'Background Checked' },
               { value: '$10 base', label: 'Starting Price' },
-              { value: '5-Star', label: 'Driver Rating' },
+              { value: 'iOS + Android', label: 'Book in the App' },
             ].map(({ value, label }) => (
               <div key={label} className="text-center">
                 <p className="text-2xl sm:text-3xl font-bold text-foreground mb-1">{value}</p>
@@ -123,9 +124,9 @@ export function HomePage() {
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { step: '01', icon: MapPin, title: 'Place Your Order', desc: 'Tell us your delivery address and what you need. Our system calculates the price instantly — no surprises.', color: '#0066FF' },
-              { step: '02', icon: Car, title: 'Driver Picks Up', desc: 'A background-checked driver accepts your order and heads to the store to grab your items.', color: '#F5C400' },
-              { step: '03', icon: Home, title: 'Delivered to You', desc: 'Your items arrive at your door. You get a confirmation email and can track progress in real time.', color: '#0066FF' },
+              { step: '01', icon: MapPin, title: 'Place Your Order', desc: 'Open the Pickup Runner app, enter the pickup and drop-off addresses, and describe your items. Review the price before confirming.', color: '#0066FF' },
+              { step: '02', icon: Car, title: 'Driver Picks Up', desc: 'A background-checked local driver accepts your delivery and collects the items from your pickup address.', color: '#F5C400' },
+              { step: '03', icon: Home, title: 'Delivered to You', desc: 'Track your runner in the app as your items travel to the drop-off address. View the delivery confirmation when they arrive.', color: '#0066FF' },
             ].map(({ step, icon: Icon, title, desc, color }) => (
               <div key={step} className="group">
                 <div className="rounded-2xl border border-border p-8 transition-all duration-300 hover:-translate-y-1" style={{ background: 'hsl(237 40% 6%)' }}>
@@ -170,13 +171,13 @@ export function HomePage() {
             <div className="grid grid-cols-2 gap-4">
               {[
                 { icon: Shield, title: 'Background Checked', desc: 'All drivers pass criminal background, MVR, and sex offender registry checks.', color: '#0066FF' },
-                { icon: Star, title: '5-Star Service', desc: 'Drivers are rated after every delivery. Low ratings mean removal from the platform.', color: '#F5C400' },
-                { icon: Clock, title: 'Fast Delivery', desc: 'Most orders delivered in under 45 minutes with real-time email updates.', color: '#0066FF' },
+                { icon: Star, title: 'Delivery Feedback', desc: 'Rate your driver after a completed delivery and share feedback about your experience.', color: '#F5C400' },
+                { icon: Clock, title: 'Live Tracking', desc: 'Follow your delivery in the app. Timing depends on distance, traffic and driver availability.', color: '#0066FF' },
                 { icon: CheckCircle2, title: 'Age Verification', desc: 'Alcohol and pharmacy orders include mandatory ID verification at the door.', color: '#F5C400' },
               ].map(({ icon: Icon, title, desc, color }) => (
                 <div key={title} className="rounded-2xl border border-border p-6 transition-all duration-300 hover:-translate-y-1 hover:border-primary/30" style={{ background: 'hsl(237 40% 6%)' }}>
                   <Icon size={24} style={{ color }} className="mb-4" />
-                  <h4 className="text-sm font-bold text-foreground mb-2">{title}</h4>
+                  <h3 className="text-sm font-bold text-foreground mb-2">{title}</h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
                 </div>
               ))}
@@ -190,12 +191,12 @@ export function HomePage() {
           <p className="text-xs font-semibold tracking-widest uppercase text-primary mb-3">Service Area</p>
           <h2 className="text-4xl font-bold text-foreground mb-4">Coverage Area</h2>
           <p className="text-lg text-muted-foreground mb-10 max-w-2xl mx-auto">
-            Pickup Runner currently operates as a hyper-local service. We deliver within a reasonable radius of your local grocery stores and pharmacies. Coverage expands as more drivers join your area.
+            Pickup Runner is a local delivery service. Availability depends on your pickup address, drop-off address and available drivers. Contact our team with your city or ZIP code to confirm coverage before booking.
           </p>
           <div className="grid sm:grid-cols-3 gap-6 mb-10">
             {[
               { label: 'Delivery Radius', value: 'Up to 15 miles', sub: 'From pickup location' },
-              { label: 'Response Time', value: '< 45 min', sub: 'Average delivery' },
+              { label: 'Delivery Timing', value: 'Check the app', sub: 'Depends on your route' },
               { label: 'Availability', value: '7 days a week', sub: 'Morning to evening' },
             ].map(({ label, value, sub }) => (
               <div key={label} className="rounded-2xl border border-border p-6" style={{ background: 'hsl(237 40% 6%)' }}>
@@ -221,11 +222,11 @@ export function HomePage() {
             <div className="relative z-10 max-w-2xl mx-auto px-6 text-center">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border mb-6"
                 style={{ background: 'hsl(47 100% 48% / 0.12)', borderColor: 'hsl(47 100% 48% / 0.3)', color: '#F5C400' }}>
-                <Car size={12} />Drivers needed in your area
+                <Car size={12} />Become a Pickup Runner driver
               </div>
               <h2 className="text-4xl sm:text-5xl font-bold text-foreground mb-4">Earn on your schedule.</h2>
               <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
-                Set your own hours. Make deliveries when it works for you. Competitive pay per mile with cash tips.
+                Set your own hours. Make deliveries when it works for you. Pay per mile plus tips through the app.
               </p>
               <Link to="/drivers"
                 className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-semibold text-base transition-all duration-200 hover:scale-105 active:scale-95 pr-glow-yellow"

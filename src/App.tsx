@@ -6,7 +6,9 @@ import {
   RouterProvider,
   Outlet,
   redirect,
+  type RouterHistory,
 } from '@tanstack/react-router'
+import { Seo, Breadcrumbs } from './components/Seo'
 import { Navbar } from './components/Navbar'
 import { Footer } from './components/Footer'
 import { HomePage } from './pages/HomePage'
@@ -50,8 +52,11 @@ declare module '@tanstack/react-router' {
 const rootRoute = createRootRoute({
   component: () => (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
+      <Seo />
+      <a href="#main-content" className="skip-link">Skip to content</a>
       <Navbar />
-      <main className="flex-1 flex flex-col">
+      <main id="main-content" tabIndex={-1} className="flex-1 flex flex-col">
+        <Breadcrumbs />
         <Outlet />
       </main>
       <Footer />
@@ -223,10 +228,11 @@ const routeTree = rootRoute.addChildren([
   ]),
 ])
 
-const router = createRouter({
-  routeTree,
-  defaultNotFoundComponent: NotFoundPage,
-})
+export function createAppRouter(history?: RouterHistory) {
+  return createRouter({ routeTree, history, defaultNotFoundComponent: NotFoundPage })
+}
+
+export const router = createAppRouter()
 
 export default function App() {
   return <RouterProvider router={router} />

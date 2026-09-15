@@ -1,0 +1,44 @@
+{
+  "/": {
+    "title": "Pickup Runner | Local Pickup & Delivery App",
+    "description": "Book local pickup and delivery for prepaid items with Pickup Runner. Collect store orders and send parcels with local drivers. Get the iPhone or Android app.",
+    "label": "Pickup Runner",
+    "type": "WebPage"
+  },
+  "/order": {
+    "title": "Local Courier & Delivery App | Pickup Runner",
+    "description": "Arrange pickup and delivery of prepaid items with Pickup Runner. Check pricing, book in the app and track your local runner. Drivers do not shop or pay for goods.",
+    "label": "Local pickup and delivery",
+    "type": "WebPage"
+  },
+  "/drivers": {
+    "title": "Become a Delivery Driver | Pickup Runner",
+    "description": "Apply to drive with Pickup Runner. Explore delivery driver requirements, background checks and flexible scheduling, then start your driver application.",
+    "label": "Become a delivery driver",
+    "type": "WebPage"
+  },
+  "/contact": {
+    "title": "Contact Pickup Runner | Delivery & Driver Support",
+    "description": "Contact Pickup Runner for delivery help, driver applications, billing questions and service availability. Send an enquiry or email our support team.",
+    "label": "Contact and support",
+    "type": "ContactPage"
+  },
+  "/privacy": {
+    "title": "Privacy Policy | Pickup Runner",
+    "description": "Read how Pickup Runner handles personal information, location data and account information, and learn how to contact us about your privacy rights.",
+    "label": "Privacy policy",
+    "type": "WebPage"
+  },
+  "/terms": {
+    "title": "Terms of Service | Pickup Runner",
+    "description": "Read Pickup Runner's terms for local deliveries, pricing, driver participation, cancellations and use of the platform.",
+    "label": "Terms of service",
+    "type": "WebPage"
+  },
+  "/delete-profile": {
+    "title": "Delete Your Account | Pickup Runner",
+    "description": "Learn how to request deletion of your Pickup Runner account and associated data, what happens next and how to reach our support team.",
+    "label": "Delete your account",
+    "type": "WebPage"
+  }
+}

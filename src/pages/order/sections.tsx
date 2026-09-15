@@ -23,13 +23,13 @@ export function Hero() {
       </div>
 
       <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-6 leading-[1.1]">
-        Send anything across town,{' '}
+        Local pickup and delivery,{' '}
         <span style={{ color: YELLOW }}>from your phone.</span>
       </h1>
 
       <p className="text-lg text-muted-foreground leading-relaxed mb-10">
-        Pickup Runner moves your things from one address to another — documents, parcels, the keys you left on
-        the counter. You book it in our mobile app, not on the web. It's free on iPhone and Android.
+        Pickup Runner collects prepaid items and delivers them to your drop-off address. Arrange a pickup
+        for a prepaid store order, parcel or ready-to-send item in our free iPhone or Android app.
       </p>
 
       <StoreButtons variant="large" className="mb-6" />
@@ -56,11 +56,11 @@ export function WhatWeMove() {
       >
         <Info size={20} className="text-primary flex-shrink-0 sm:mt-0.5" />
         <div className="space-y-2">
-          <h2 className="text-base font-bold text-foreground">We move things. We do not sell them.</h2>
+          <h2 className="text-base font-bold text-foreground">Prepaid pickup and delivery. No shopping service.</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Pickup Runner is a delivery platform, not a store or a shopping service. There is no catalogue and
-            no cart. You tell us where your item is and where it needs to end up, and a vetted runner drives it
-            there — usually within the hour. Your runner never buys anything on your behalf.
+            Pay for your items before booking a pickup. Your runner collects the prepared items and delivers
+            them to your chosen address; runners do not shop, buy items or pay a store on your behalf.
+            Include the collection reference and clear pickup instructions in your booking.
           </p>
         </div>
       </div>
@@ -73,9 +73,9 @@ export function WhatWeMove() {
         <div className="space-y-2">
           <h2 className="text-base font-bold text-foreground">Why there is no web booking</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            A handoff needs a conversation. Your runner has to reach you about building access, who is receiving
-            at the other end, and whether it fits in the car. You need live tracking and a photo when it lands. A
-            web form cannot do any of that — the app can, so that is where every delivery lives.
+            Book in the Pickup Runner mobile app to manage your delivery details, track your runner and view
+            the delivery confirmation. This website explains the service and provides contact and driver
+            application forms; delivery bookings are handled in the app.
           </p>
         </div>
       </div>
@@ -192,7 +192,7 @@ export function Pricing() {
       <div className="grid sm:grid-cols-3 gap-4">
         {[
           { icon: BadgeCheck, label: 'No membership', sub: 'Nothing monthly' },
-          { icon: Clock, label: 'Under 45 min', sub: 'Typical delivery' },
+          { icon: Clock, label: 'Live tracking', sub: 'Follow your delivery' },
           { icon: MapPin, label: 'Up to 15 miles', sub: 'Pickup to drop-off' },
         ].map(({ icon: Icon, label, sub }) => (
           <div key={label} className="rounded-2xl border border-border p-5 text-center" style={{ background: 'hsl(237 40% 6%)' }}>
@@ -204,7 +204,7 @@ export function Pricing() {
       </div>
 
       <p className="mt-6 text-xs text-muted-foreground text-center">
-        You are paying for the trip, not for goods — there is nothing to buy and nothing to reimburse.
+        Check the app for the current total and applicable charges before confirming your delivery.
       </p>
     </div>
   </section>

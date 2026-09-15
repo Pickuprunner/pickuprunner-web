@@ -5,12 +5,12 @@ import { Boxes, Camera, Car, CreditCard, FileText, Gift, KeyRound, MapPin, Navig
 export const STEPS = [
   { step: '01', icon: Smartphone, title: 'Get the app', desc: 'Download Pickup Runner on iOS or Android. Free to install — no subscription, no membership.', color: BLUE },
   { step: '02', icon: MapPin, title: 'Set both addresses', desc: 'Where it is now, and where it needs to go. Save the places you send from often.', color: YELLOW },
-  { step: '03', icon: Boxes, title: 'Describe the item', desc: 'What it is, roughly how big, and who is handing it over at each end. See the full price before you confirm.', color: BLUE },
+  { step: '03', icon: Boxes, title: 'Prepare your pickup', desc: 'Pay for any goods before collection. Describe your items and add a collection reference and handoff instructions. Review the delivery price before you confirm.', color: BLUE },
   { step: '04', icon: Navigation, title: 'Track it door to door', desc: 'Follow your runner live from collection to handoff, and get a delivery photo when it lands.', color: YELLOW },
 ]
 
 export const SEND_CATEGORIES = [
-  { icon: FileText, title: 'Documents & paperwork', desc: 'Contracts, signed forms, certificates, passports for an appointment — across town in under an hour.' },
+  { icon: FileText, title: 'Documents & paperwork', desc: 'Contracts, signed forms, certificates, passports for an appointment — delivered between local addresses.' },
   { icon: KeyRound, title: 'The thing you left behind', desc: 'Keys, wallet, phone charger, the laptop still on the kitchen table. Sent to wherever you actually are.' },
   { icon: Boxes, title: 'Parcels & packages', desc: 'Anything boxed or bagged that fits in a car and one person can carry comfortably.' },
   { icon: Gift, title: 'Gifts & occasions', desc: 'A birthday present, flowers, or a cake that needs to get across the city today, not in three days.' },
@@ -37,11 +37,11 @@ export const PRICING = [
 export const FAQ = [
   {
     q: 'Can I book a delivery on this website?',
-    a: 'No. Every Pickup Runner delivery is booked through our mobile app. This website explains how the service works, what it costs, and where we operate — but there is no web booking, and there will not be one at launch.',
+    a: 'No. Every Pickup Runner delivery is booked through our mobile app. This website explains how the service works, what it costs, and where we operate — delivery bookings are handled in the app.',
   },
   {
-    q: 'So you do not sell anything?',
-    a: 'Correct. We are a delivery platform, not a shop or a shopping service. You already own the item; we move it from one address to another. Your runner does not buy anything on your behalf and never pays for goods at either end.',
+    q: 'Will my runner shop or pay for my items?',
+    a: 'No. Pickup Runner only collects prepaid items. Pay for your goods first and make sure they are ready for collection. Your runner picks them up and delivers them; runners do not shop, buy goods or pay the store on your behalf.',
   },
   {
     q: 'What can I send?',
@@ -65,7 +65,7 @@ export const FAQ = [
   },
   {
     q: 'How far will a runner go?',
-    a: 'Up to about 15 miles between pickup and drop-off, seven days a week. Most sends are completed in under 45 minutes. Coverage widens as more runners join your area.',
+    a: 'Up to about 15 miles between pickup and drop-off, seven days a week. Delivery time depends on the route, traffic and driver availability. Coverage widens as more runners join your area.',
   },
   {
     q: 'Where do I get the app?',

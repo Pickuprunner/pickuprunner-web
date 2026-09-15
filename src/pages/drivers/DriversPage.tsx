@@ -20,7 +20,7 @@ export function DriversPage() {
             <Car size={12} />Driver Recruitment
           </div>
           <h1 className="text-5xl sm:text-6xl font-bold text-foreground mb-6">
-            Drive. <span style={{ color: '#F5C400' }}>Earn.</span> Repeat.
+            Become a <span style={{ color: '#F5C400' }}>delivery driver.</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Join the Pickup Runner driver network. Set your own schedule, earn competitive pay, and help your community get what they need delivered fast.

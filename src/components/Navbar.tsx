@@ -25,11 +25,11 @@ export function Navbar() {
             <Zap size={16} className="text-primary-foreground" />
           </div>
           <span className="font-bold text-lg tracking-tight text-foreground">
-            Pickup<span style={{ color: '#F5C400' }}>Runner</span>
+            Pickup <span style={{ color: '#F5C400' }}>Runner</span>
           </span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-1">
+        <nav aria-label="Main navigation" className="hidden md:flex items-center gap-1">
           {links.map((link) => (
             <Link
               key={link.to}
@@ -46,13 +46,14 @@ export function Navbar() {
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
           aria-expanded={mobileOpen}
+          aria-controls="mobile-navigation"
         >
           {mobileOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl px-4 py-4 flex flex-col gap-2">
+        <nav id="mobile-navigation" aria-label="Mobile navigation" className="md:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl px-4 py-4 flex flex-col gap-2">
           {links.map((link) => (
             <Link
               key={link.to}
@@ -63,7 +64,7 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
-        </div>
+        </nav>
       )}
     </header>
   )

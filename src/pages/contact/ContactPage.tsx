@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { Mail, MessageCircle } from 'lucide-react'
 
-import { BLUE, YELLOW } from '../../lib/brand'
+import { BLUE, YELLOW, SUPPORT_EMAIL } from '../../lib/brand'
 import { EnquiryForm } from './EnquiryForm'
 import { SELF_SERVE } from './content'
 
@@ -24,8 +24,8 @@ export function ContactPage() {
           </div>
 
           <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-6 leading-[1.1]">
-            Talk to a{' '}
-            <span style={{ color: YELLOW }}>real person.</span>
+            Contact Pickup Runner.{' '}
+            <span style={{ color: YELLOW }}>We’re here to help.</span>
           </h1>
 
           <p className="text-lg text-muted-foreground leading-relaxed">
@@ -50,6 +50,7 @@ export function ContactPage() {
             </p>
           </div>
 
+          <p className="text-center text-muted-foreground mb-8">Email us at <a className="text-primary hover:underline" href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>, or use the form below.</p>
           <EnquiryForm />
         </div>
       </section>

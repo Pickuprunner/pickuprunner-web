@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { Zap, Share2, Camera } from 'lucide-react'
+import { Zap } from 'lucide-react'
 import { StoreButtons } from './StoreButtons'
 
 export function Footer() {
@@ -13,20 +13,17 @@ export function Footer() {
                 <Zap size={16} className="text-primary-foreground" />
               </div>
               <span className="font-bold text-lg tracking-tight text-foreground">
-                Pickup<span style={{ color: '#F5C400' }}>Runner</span>
+                Pickup <span style={{ color: '#F5C400' }}>Runner</span>
               </span>
             </Link>
             <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
-              Hyper-local grocery and pharmacy delivery. Fast, transparent, and trusted with 100% background-checked drivers.
+              Local pickup and delivery of prepaid items with Pickup Runner. Book in the app, see the price before you confirm and track your runner.
             </p>
             <StoreButtons className="mt-4" />
-            <div className="flex gap-3 mt-4">
-              <a href="#" className="p-2 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-colors"><Share2 size={16} /></a>
-              <a href="#" className="p-2 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-colors"><Camera size={16} /></a>
-            </div>
+            <p className="text-sm text-muted-foreground mt-4">Operated by Pickup Runner LLC.</p>
           </div>
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-3">Service</h4>
+            <h2 className="text-sm font-semibold text-foreground mb-3">Service</h2>
             <ul className="space-y-2">
               <li><Link to="/" hash="how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors">How It Works</Link></li>
               <li><Link to="/" hash="pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</Link></li>
@@ -35,7 +32,7 @@ export function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-3">Drivers</h4>
+            <h2 className="text-sm font-semibold text-foreground mb-3">Drivers</h2>
             <ul className="space-y-2">
               <li><Link to="/drivers" hash="apply" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Become a Driver</Link></li>
               <li><Link to="/drivers" hash="requirements" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Requirements</Link></li>
@@ -46,10 +43,10 @@ export function Footer() {
         </div>
         <div className="mt-12 pt-6 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-xs text-muted-foreground">&copy; {new Date().getFullYear()} Pickup Runner. All rights reserved.</p>
-          <div className="flex gap-4">
+          <div className="flex flex-wrap justify-center gap-4">
             <Link to="/privacy" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Privacy</Link>
             <Link to="/terms" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Terms</Link>
-            {/* <Link to="/delete-profile" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Delete Account</Link> */}
+            <Link to="/delete-profile" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Delete Account</Link>
             <Link to="/contact" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Contact</Link>
           </div>
         </div>

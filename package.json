@@ -5,13 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/prerender.mjs",
     "preview": "vite preview",
     "lint:css": "stylelint \"src/**/*.css\" --fix --quiet",
     "lint:types": "tsc --noEmit",
     "lint": "npm run lint:types && npm run lint:css",
-    "preview:cf": "vite build && wrangler dev",
-    "deploy": "vite build && wrangler deploy"
+    "preview:cf": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test:seo": "node --test tests/seo.test.mjs",
+    "test:dev": "node --test tests/dev-crawlers.test.mjs",
+    "deploy:check": "wrangler deploy --dry-run"
   },
   "devDependencies": {
     "@types/react": "^19.2.18",
