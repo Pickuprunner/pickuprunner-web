@@ -6,11 +6,11 @@ import { ApplicationForm } from './ApplicationForm'
 export function DriversPage() {
   return (
     <div className="min-h-screen pt-16">
-      <section className="relative py-20 overflow-hidden border-b border-border">
-        <div className="absolute inset-0 pr-grid-bg opacity-30" />
+      <section className="relative py-14 sm:py-16 overflow-hidden border-b border-border">
+        <div className="absolute inset-0 pr-grid-bg opacity-20" />
         <div
-          className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, hsl(47 100% 48% / 0.08) 0%, transparent 60%)', transform: 'translate(30%,-30%)' }}
+          className="absolute top-1/2 left-1/2 w-[760px] h-[520px] -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse, hsl(47 100% 48% / 0.08) 0%, transparent 68%)' }}
         />
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center">
           <div
