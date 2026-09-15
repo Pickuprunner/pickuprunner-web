@@ -2,7 +2,7 @@
 import { Link } from '@tanstack/react-router'
 import { ClipboardList, UserRound } from 'lucide-react'
 import { accreditationsApi } from '../../../lib/api'
-import { BackLink, DetailHeader, EligibilityBadge, Panel, PanelSection, StatusBadge, useAdmin, useAdminData } from '../ui'
+import { BackLink, DetailHeader, EligibilityBadge, Panel, PanelSection, RenewalBadge, StatusBadge, useAdmin, useAdminData } from '../ui'
 import { DecisionBar, ProfileActivity, ProfileDetails, ProfileSections } from './ProfileSections'
 import { HEADER_LINK, HEADER_LINK_BORDER } from './account'
 import { applicationDetailRoute } from './routes'
@@ -33,7 +33,7 @@ export function ApplicationDetailPage() {
               badges={
                 <>
                   <StatusBadge value={data.accreditationStatus} />
-                  {/* Whether they can drive — only when it says something different. */}
+                  <RenewalBadge source={data} />
                   {data.eligibility?.code !== data.accreditationStatus && (
                     <EligibilityBadge eligibility={data.eligibility} />
                   )}
@@ -55,7 +55,7 @@ export function ApplicationDetailPage() {
 
             <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px] items-start">
               <Panel>
-                <ProfileSections profile={data} version={version} onReviewed={reload} />
+                <ProfileSections profile={data} expiry={data.expiry} version={version} onReviewed={reload} />
               </Panel>
 
               <Panel>
@@ -73,5 +73,3 @@ export function ApplicationDetailPage() {
     </>
   )
 }
-
-// ── /admin/accounts/$userId ─────────────────────────────────────────────────

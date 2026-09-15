@@ -1,12 +1,13 @@
 
 import { useCallback, useRef, useState } from 'react'
 import { Link } from '@tanstack/react-router'
+import toast from 'react-hot-toast'
 import { AlertCircle, Car, ChevronDown, ClipboardList, Eye, FileText, MapPin } from 'lucide-react'
 import { accreditationsApi, type Accreditation } from '../../../lib/api'
-import { Card, Detail, FilterRow, IconBubble, PanelState, StatusBadge, Total, day, useAdmin, useAdminData, useRegisterReload } from '../ui'
+import { Card, Detail, DocumentBadge, ExpiryChip, FilterRow, IconBubble, PanelState, RenewalBadge, StatusBadge, Total, credentials, day, matchesDerived, renewalOf, useAdmin, useAdminData, useRegisterReload } from '../ui'
 import { QuickCheck, approveBlockers } from '../quick-check'
 import { ReviewActions } from './ReviewActions'
-import { APPLICATION_STATUSES, ApplicationFilter } from './filters'
+import { APPLICATION_STATUSES, ApplicationFilter, DERIVED_FILTERS, FILTER_LABELS, isDerivedFilter } from './filters'
 import { applicationsRoute } from './routes'
 
 function ApplicationCard({ application, token, onReviewed, onQuickCheck }: {
@@ -15,6 +16,7 @@ function ApplicationCard({ application, token, onReviewed, onQuickCheck }: {
   onReviewed: () => void
   onQuickCheck: () => void
 }) {
+  const [renewalBusy, setRenewalBusy] = useState(false)
   const { user } = application
 
   const name = application.legalName || user?.displayName || user?.email || 'Unnamed applicant'
@@ -24,11 +26,40 @@ function ApplicationCard({ application, token, onReviewed, onQuickCheck }: {
   const area = application.serviceArea || [application.city, application.state].filter(Boolean).join(', ')
   const applied = application.submittedAt || application.createdAt
 
+  const { license, insurance } = credentials(application)
+  const renewal = renewalOf(application)
+
   const documents = [
     { label: 'Licence front', held: application.documents?.licenseFront },
     { label: 'Licence back', held: application.documents?.licenseBack },
     { label: 'Insurance card', held: application.documents?.insuranceCard },
   ]
+
+  const approveRenewal = async () => {
+    if (renewal.kind === 'none') return
+
+    setRenewalBusy(true)
+    try {
+      await accreditationsApi.review(token, application.userId, {
+        ...(renewal.kind === 'license' || renewal.kind === 'both'
+          ? { licenseStatus: 'approved' as const }
+          : {}),
+        ...(renewal.kind === 'insurance' || renewal.kind === 'both'
+          ? { insuranceStatus: 'approved' as const }
+          : {}),
+      })
+      toast.success(
+        renewal.kind === 'both'
+          ? 'Updated licence and insurance approved'
+          : `Updated ${renewal.kind === 'license' ? 'licence' : 'insurance'} approved`,
+      )
+      onReviewed()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'That did not go through.')
+    } finally {
+      setRenewalBusy(false)
+    }
+  }
 
   return (
     <Card>
@@ -68,14 +99,17 @@ function ApplicationCard({ application, token, onReviewed, onQuickCheck }: {
           </div>
         </div>
 
-        <div className="flex-shrink-0">
-          <StatusBadge value={application.accreditationStatus} />
+        <div className="flex-shrink-0 flex flex-wrap gap-1.5 sm:justify-end">
+          <StatusBadge value={renewal.kind === 'none' ? application.accreditationStatus : 'under_review'} />
+          <RenewalBadge source={application} />
         </div>
       </div>
 
-      <div className="mt-4 pt-4 border-t border-border flex flex-wrap gap-1.5">
-        <StatusBadge label="Licence" value={application.licenseStatus} />
-        <StatusBadge label="Insurance" value={application.insuranceStatus} />
+      <div className="mt-4 pt-4 border-t border-border flex flex-wrap items-center gap-x-3 gap-y-2">
+        <DocumentBadge credential={license} />
+        <ExpiryChip window={license.window} quiet />
+        <DocumentBadge credential={insurance} />
+        <ExpiryChip window={insurance.window} quiet />
         <StatusBadge label="Background" value={application.backgroundStatus} />
       </div>
 
@@ -113,11 +147,18 @@ function ApplicationCard({ application, token, onReviewed, onQuickCheck }: {
 
       <div className="mt-4 pt-4 border-t border-border">
         <ReviewActions
-          application={application}
+          application={{
+            ...application,
+            accreditationStatus: renewal.kind === 'none' ? application.accreditationStatus : 'under_review',
+          }}
           token={token}
           onReviewed={onReviewed}
           name={name}
-          onApprove={onQuickCheck}
+          onApprove={renewal.kind === 'none' ? onQuickCheck : approveRenewal}
+          approveLabel={renewal.kind === 'none'
+            ? undefined
+            : `Approve updated ${renewal.kind === 'both' ? 'documents' : renewal.kind === 'license' ? 'licence' : 'insurance'}`}
+          approveBusy={renewalBusy}
           extra={
             <Link
               to="/admin/applications/$userId"
@@ -139,10 +180,11 @@ export function ApplicationsPanel() {
   const { token } = useAdmin()
   const { status = 'all' } = applicationsRoute.useSearch()
   const navigate = applicationsRoute.useNavigate()
+  const derived = isDerivedFilter(status)
 
   const { data, loading, error, reload } = useAdminData(
     () => accreditationsApi.list(token, {
-      status: status === 'all' ? undefined : status,
+      status: status === 'all' || derived ? undefined : status,
       limit: 50,
     }),
     [token, status],
@@ -151,7 +193,20 @@ export function ApplicationsPanel() {
   useRegisterReload(reload)
 
   const [checking, setChecking] = useState<string | null>(null)
-  const applications = data?.accreditations ?? []
+  const fetched = data?.accreditations ?? []
+  const applications = derived
+    ? fetched.filter((application) => matchesDerived(status, application))
+    : fetched
+
+  const counts =
+    status === 'all' || derived
+      ? Object.fromEntries(
+          DERIVED_FILTERS.map((name) => [
+            name,
+            fetched.filter((application) => matchesDerived(name, application)).length,
+          ]),
+        )
+      : undefined
   const decided = useRef(new Set<string>())
   const nextAfter = (userId: string) => {
     const index = applications.findIndex((application) => application.userId === userId)
@@ -171,6 +226,8 @@ export function ApplicationsPanel() {
         <FilterRow<ApplicationFilter>
           options={APPLICATION_STATUSES}
           value={status}
+          labels={FILTER_LABELS}
+          counts={counts}
           onChange={(next) => navigate({ search: { status: next === 'all' ? undefined : next } })}
         />
       </div>
@@ -178,13 +235,17 @@ export function ApplicationsPanel() {
       <PanelState
         loading={loading && !data}
         error={error}
-        empty={!data?.accreditations.length}
-        emptyLabel="No driver applications"
-        emptyHint="Applications submitted from the Drive With Us page land here."
+        empty={!applications.length}
+        emptyLabel={derived ? 'Nothing in this view' : 'No driver applications'}
+        emptyHint={
+          derived
+            ? 'No one on this page matches. Renewals and expiries are read from the applications already loaded.'
+            : 'Applications submitted from the Drive With Us page land here.'
+        }
       >
-        <Total shown={data?.accreditations.length ?? 0} total={data?.total} />
+        <Total shown={applications.length} total={derived ? undefined : data?.total} />
         <div className="space-y-3">
-          {data?.accreditations.map((application) => (
+          {applications.map((application) => (
             <ApplicationCard
               key={application.userId}
               application={application}

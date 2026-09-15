@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react'
 import { AlertCircle, Check, ExternalLink, MapPin } from 'lucide-react'
 import { type AccreditationProfile } from '../../../lib/api'
 import { Card, ErrorLine, Spinner, day, mapsUrl, useRegisterReload } from '../ui'
-import { ageFrom, isPast } from '../quick-check'
+import { ageFrom } from '../quick-check'
 
 export function useScreenRefresh(reload: () => void) {
   const [version, setVersion] = useState(0)
@@ -74,12 +74,6 @@ export function MapLink({ lat, lng, label = 'Open in Maps' }: {
 }
 
 export const EXPIRED_RED = '#EF4444'
-
-export function ExpiryValue({ date }: { date: string }) {
-  return isPast(date)
-    ? <span className="font-semibold" style={{ color: EXPIRED_RED }}>Expired {day(date)}</span>
-    : <>{day(date)}</>
-}
 
 export const withAge = (dateOfBirth?: string | null) => {
   if (!dateOfBirth) return null

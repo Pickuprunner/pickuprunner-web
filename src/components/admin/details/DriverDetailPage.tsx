@@ -2,7 +2,7 @@
 import { Link } from '@tanstack/react-router'
 import { ClipboardList } from 'lucide-react'
 import { adminApi } from '../../../lib/api'
-import { Avatar, BackLink, DetailHeader, EligibilityBadge, Field, Fields, Panel, PanelSection, Stat, StatusBadge, day, money, timeAgo, useAdmin, useAdminData, yesNo } from '../ui'
+import { Avatar, BackLink, DetailHeader, EligibilityBadge, Field, Fields, Panel, PanelSection, RenewalBadge, Stat, StatusBadge, day, money, timeAgo, useAdmin, useAdminData, yesNo } from '../ui'
 import { OrderHistory } from './OrderHistory'
 import { DecisionBar, ProfileDetails, ProfileSections } from './ProfileSections'
 import { AccountFields, DeletedNote, HEADER_LINK, HEADER_LINK_BORDER, HeaderActions } from './account'
@@ -23,6 +23,8 @@ export function DriverDetailPage() {
   const presence = data?.presence
   const name = profile?.legalName || driver?.displayName || driver?.email || 'Unnamed driver'
 
+  const credentialSource = profile ? { ...profile, expiry: data?.expiry ?? null } : null
+
   const needsDecision = Boolean(profile) && profile?.accreditationStatus !== 'approved'
 
   return (
@@ -42,6 +44,7 @@ export function DriverDetailPage() {
                   {driver.deletedAt ? <StatusBadge value="deleted" /> : <StatusBadge value={driver.status} />}
                   <EligibilityBadge eligibility={data.eligibility} />
                   <StatusBadge value={driver.isAvailable ? 'on_duty' : 'off_duty'} />
+                  <RenewalBadge source={credentialSource} />
                 </>
               }
               aside={
@@ -87,7 +90,7 @@ export function DriverDetailPage() {
                   </PanelSection>
 
                   {profile ? (
-                    <ProfileSections profile={profile} version={version} onReviewed={reload} />
+                    <ProfileSections profile={profile} expiry={data.expiry} version={version} onReviewed={reload} />
                   ) : (
                     <PanelSection title="Application">
                       <p className="text-sm text-muted-foreground">This driver hasn't started the driver application.</p>

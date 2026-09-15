@@ -1,12 +1,13 @@
 
 import { Banknote, Car, MapPin } from 'lucide-react'
 import { adminApi, type Accreditation } from '../../../lib/api'
-import { Avatar, CardLink, Detail, EligibilityBadge, EligibilityNote, PanelState, SearchBox, Stat, StatusBadge, Total, ViewHint, day, money, useAdmin, useAdminData, useRegisterReload } from '../ui'
+import { Avatar, CardLink, Detail, DocumentBadge, EligibilityBadge, EligibilityNote, ExpiryChip, FilterRow, PanelState, RenewalBadge, SearchBox, Stat, StatusBadge, Total, ViewHint, credentials, day, matchesDerived, money, useAdmin, useAdminData, useRegisterReload } from '../ui'
+import { DRIVER_VIEWS, DriverView, FILTER_LABELS } from './filters'
 import { driversRoute } from './routes'
 
 export function DriversPanel() {
   const { token } = useAdmin()
-  const { q = '' } = driversRoute.useSearch()
+  const { q = '', view = 'all' } = driversRoute.useSearch()
   const navigate = driversRoute.useNavigate()
 
   const { data, loading, error, reload } = useAdminData(
@@ -16,26 +17,54 @@ export function DriversPanel() {
 
   useRegisterReload(reload)
 
+  const fetched = data?.drivers ?? []
+  const drivers = view === 'all' ? fetched : fetched.filter((driver) => matchesDerived(view, driver))
+  const counts = Object.fromEntries(
+    DRIVER_VIEWS.filter((name) => name !== 'all').map((name) => [
+      name,
+      fetched.filter((driver) => matchesDerived(name, driver)).length,
+    ]),
+  )
+
   return (
     <>
-      <div className="flex flex-wrap gap-3 mb-6">
+      <div className="flex flex-wrap gap-3 mb-4">
         <SearchBox
           value={q}
-          onCommit={(next) => navigate({ search: { q: next || undefined }, replace: true })}
+          onCommit={(next) => navigate({ search: { q: next || undefined, view: view === 'all' ? undefined : view }, replace: true })}
           placeholder="Search name, email, phone"
+        />
+      </div>
+
+      <div className="mb-6">
+        <FilterRow<DriverView>
+          options={DRIVER_VIEWS}
+          value={view}
+          labels={FILTER_LABELS}
+          counts={counts}
+          onChange={(next) =>
+            navigate({ search: { q: q || undefined, view: next === 'all' ? undefined : next } })
+          }
         />
       </div>
 
       <PanelState
         loading={loading && !data}
         error={error}
-        empty={!data?.drivers.length}
-        emptyLabel="No drivers"
-        emptyHint="Approved applicants appear here as drivers."
+        empty={!drivers.length}
+        emptyLabel={view === 'all' ? 'No drivers' : 'Nothing in this view'}
+        emptyHint={
+          view === 'all'
+            ? 'Approved applicants appear here as drivers.'
+            : 'No one on this page matches. Renewals and expiries are read from the drivers already loaded.'
+        }
       >
-        <Total shown={data?.drivers.length ?? 0} total={data?.total} />
+        <Total shown={drivers.length} total={view === 'all' ? data?.total : undefined} />
         <div className="space-y-3">
-          {data?.drivers.map((driver) => (
+          {drivers.map((driver) => {
+            const { license, insurance } = credentials(driver)
+
+            return (
             <CardLink key={driver.id} to="/admin/drivers/$driverId" params={{ driverId: driver.id }}>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
                 <Avatar url={driver.photoUrl} name={driver.displayName || driver.email} />
@@ -50,6 +79,7 @@ export function DriversPanel() {
                       <StatusBadge value={driver.isAvailable ? 'on_duty' : 'off_duty'} />
                     )}
                     <EligibilityBadge eligibility={driver.eligibility} />
+                    <RenewalBadge source={driver} />
                   </div>
 
                   <p className="text-xs text-muted-foreground truncate">
@@ -80,10 +110,12 @@ export function DriversPanel() {
                 <ViewHint />
               </div>
 
-              <div className="mt-4 pt-4 border-t border-border flex flex-wrap gap-1.5">
+              <div className="mt-4 pt-4 border-t border-border flex flex-wrap items-center gap-x-3 gap-y-2">
                 <StatusBadge label="Accreditation" value={driver.accreditation?.status} />
-                <StatusBadge label="Licence" value={driver.accreditation?.license} />
-                <StatusBadge label="Insurance" value={driver.accreditation?.insurance} />
+                <DocumentBadge credential={license} />
+                <ExpiryChip window={license.window} quiet />
+                <DocumentBadge credential={insurance} />
+                <ExpiryChip window={insurance.window} quiet />
                 <StatusBadge label="Background" value={driver.accreditation?.background} />
               </div>
 
@@ -97,7 +129,8 @@ export function DriversPanel() {
                 <Stat label="Paid out" value={money(driver.totalEarnedCents)} />
               </div>
             </CardLink>
-          ))}
+            )
+          })}
         </div>
       </PanelState>
     </>

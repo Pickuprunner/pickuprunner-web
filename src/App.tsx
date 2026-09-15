@@ -18,9 +18,11 @@ import { TermsPage } from './pages/TermsPage'
 import {
   ACCOUNT_ROLES,
   APPLICATION_STATUSES,
+  DRIVER_VIEWS,
   ORDER_STATUSES,
   type AccountFilter,
   type ApplicationFilter,
+  type DriverView,
   type OrderFilter,
 } from './components/admin/panels/filters'
 
@@ -155,8 +157,9 @@ const adminCustomerRoute = createRoute({
 const adminDriversRoute = createRoute({
   getParentRoute: () => adminRoute,
   path: 'drivers',
-  validateSearch: (search: Record<string, unknown>): { q?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { q?: string; view?: DriverView } => ({
     q: text(search.q),
+    view: oneOf(DRIVER_VIEWS, search.view),
   }),
   component: DriversPanel,
 })

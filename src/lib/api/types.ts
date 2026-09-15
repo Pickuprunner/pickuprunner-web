@@ -74,6 +74,18 @@ export type AccreditationStatus =
 export type ReviewStatus = 'pending' | 'approved' | 'rejected'
 
 export type BackgroundStatus = 'not_started' | 'in_review' | 'approved' | 'rejected'
+export interface CredentialWindow {
+  expirationDate: string | null
+  expired: boolean
+  daysLeft: number | null
+  expiringSoon: boolean
+}
+
+export interface CredentialExpiry {
+  license: CredentialWindow
+  insurance: CredentialWindow
+  anyExpired: boolean
+}
 
 export interface AccreditationUser {
   id: string
@@ -111,6 +123,7 @@ export interface Accreditation {
   documents: { licenseFront: boolean; licenseBack: boolean; insuranceCard: boolean }
   user: AccreditationUser
   eligibility: { eligible: boolean; code: string; reason?: string }
+  expiry: CredentialExpiry | null
   missing: string[]
 }
 
@@ -202,6 +215,7 @@ export interface AdminDriver {
   }
   eligibility: { eligible: boolean; code: string; reason?: string }
   vehicle: { make: string; model: string; plate: string | null } | null
+  expiry: CredentialExpiry | null
   location: { city: string; state: string | null } | null
   payouts: { stripeAccountId: string | null; stripeAccountMode: string | null; canBePaid: boolean }
   orders: { total: number; delivered: number; active: number; unsettled: number }
@@ -290,6 +304,7 @@ export interface AdminDriverDetail {
   driver: AdminAccount
   accreditation: AccreditationProfile | null
   eligibility: { eligible: boolean; code: string; reason?: string }
+  expiry: CredentialExpiry | null
   missing: string[] | null
   payouts: {
     stripeAccountId: string | null
@@ -397,6 +412,11 @@ export interface AccreditationProfile {
   backgroundReviewedAt: string | null
   backgroundNotes: string | null
   hasSsnLast4: boolean
+  /**
+   * The four digits the driver gave for the background check, or null. What the
+   * admin running the screening types into the provider's form.
+   */
+  ssnLast4: string | null
   hasLicenseAndInsurance: boolean | null
   cleanDrivingRecord: boolean | null
   attestedAt?: string | null
@@ -415,5 +435,6 @@ export interface AccreditationProfile {
 export interface AccreditationDetail extends AccreditationProfile {
   user: { id: string; email: string | null; displayName: string | null; phone: string | null; stripeAccountId: string | null }
   eligibility: { eligible: boolean; code: string; reason?: string }
+  expiry: CredentialExpiry | null
   missing: string[]
 }

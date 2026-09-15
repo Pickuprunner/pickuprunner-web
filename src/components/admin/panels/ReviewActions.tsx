@@ -5,12 +5,14 @@ import { AlertCircle, Check, CheckCircle2, Loader2, X } from 'lucide-react'
 import { driverReviewApi, type Accreditation } from '../../../lib/api'
 import { approveBlockers } from '../quick-check'
 
-export function ReviewActions({ application, token, onReviewed, name, onApprove, extra, showNote = true }: {
+export function ReviewActions({ application, token, onReviewed, name, onApprove, approveLabel, approveBusy = false, extra, showNote = true }: {
   application: Pick<Accreditation, 'userId' | 'accreditationStatus' | 'submittedAt'> & { missing?: string[] | null }
   token: string
   onReviewed: () => void
   name?: string | null
   onApprove?: () => void
+  approveLabel?: string
+  approveBusy?: boolean
   extra?: React.ReactNode
   showNote?: boolean
 }) {
@@ -109,15 +111,15 @@ export function ReviewActions({ application, token, onReviewed, name, onApprove,
             <button
               type="button"
               onClick={() => (onApprove ? onApprove() : run('approve'))}
-              disabled={busy !== null || !canApprove}
+              disabled={busy !== null || approveBusy || !canApprove}
               title={approveBlocked || undefined}
               className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ background: '#22C55E', color: '#04120A' }}
             >
-              {busy === 'approve'
+              {busy === 'approve' || approveBusy
                 ? <Loader2 size={13} className="animate-spin" />
                 : <Check size={13} />}
-              Approve driver
+              {approveLabel || 'Approve driver'}
             </button>
             )}
 

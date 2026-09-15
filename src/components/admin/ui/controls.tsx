@@ -16,8 +16,14 @@ export function ViewHint() {
 }
 
 export function FilterRow<T extends string>({
-  options, value, onChange,
-}: { options: readonly T[]; value: T; onChange: (next: T) => void }) {
+  options, value, onChange, labels, counts,
+}: {
+  options: readonly T[]
+  value: T
+  onChange: (next: T) => void
+  labels?: Partial<Record<T, string>>
+  counts?: Partial<Record<T, number>>
+}) {
   return (
     <div className="flex flex-wrap gap-2">
       {options.map((option) => (
@@ -32,7 +38,15 @@ export function FilterRow<T extends string>({
             color: value === option ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))',
           }}
         >
-          {option === 'all' ? 'All' : humanise(option)}
+          {labels?.[option] ?? (option === 'all' ? 'All' : humanise(option))}
+          {typeof counts?.[option] === 'number' && (
+            <span
+              className="ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums"
+              style={{ background: 'hsl(var(--foreground) / 0.1)' }}
+            >
+              {counts[option]}
+            </span>
+          )}
         </button>
       ))}
     </div>
