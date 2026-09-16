@@ -1,17 +1,17 @@
 
 import { CheckCircle2 } from 'lucide-react'
 import { adminApi } from '../../../lib/api'
-import { Avatar, CardLink, Detail, PanelState, SearchBox, Stat, StatusBadge, Total, ViewHint, day, money, useAdmin, useAdminData, useRegisterReload } from '../ui'
+import { Avatar, CardLink, Detail, PaginationControls, PanelState, SearchBox, Stat, StatusBadge, Total, ViewHint, day, money, useAdmin, useAdminData, useRegisterReload } from '../ui'
 import { customersRoute } from './routes'
 
 export function CustomersPanel() {
   const { token } = useAdmin()
-  const { q = '' } = customersRoute.useSearch()
+  const { q = '', page = 1 } = customersRoute.useSearch()
   const navigate = customersRoute.useNavigate()
 
   const { data, loading, error, reload } = useAdminData(
-    () => adminApi.customers(token, { search: q || undefined, limit: 50 }),
-    [token, q],
+    () => adminApi.customers(token, { search: q || undefined, limit: 50, page }),
+    [token, q, page],
   )
 
   useRegisterReload(reload)
@@ -21,7 +21,7 @@ export function CustomersPanel() {
       <div className="flex flex-wrap gap-3 mb-6">
         <SearchBox
           value={q}
-          onCommit={(next) => navigate({ search: { q: next || undefined }, replace: true })}
+          onCommit={(next) => navigate({ search: { q: next || undefined, page: undefined }, replace: true })}
           placeholder="Search name, email, phone"
         />
       </div>
@@ -76,6 +76,11 @@ export function CustomersPanel() {
             </CardLink>
           ))}
         </div>
+        <PaginationControls
+          page={page}
+          totalPages={data?.totalPages}
+          onChange={(nextPage) => navigate({ search: { q: q || undefined, page: nextPage <= 1 ? undefined : nextPage }, replace: true })}
+        />
       </PanelState>
     </>
   )

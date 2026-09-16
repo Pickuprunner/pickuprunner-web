@@ -1,7 +1,7 @@
 
 import { Car, MapPin, Package } from 'lucide-react'
 import { adminApi, type AdminOrder } from '../../../lib/api'
-import { CardLink, Detail, FilterRow, IconBubble, PanelState, SearchBox, Stat, StatusBadge, Total, ViewHint, day, decimal, itemLines, money, useAdmin, useAdminData, useRegisterReload } from '../ui'
+import { CardLink, Detail, FilterRow, IconBubble, PaginationControls, PanelState, SearchBox, Stat, StatusBadge, Total, ViewHint, day, decimal, itemLines, money, useAdmin, useAdminData, useRegisterReload } from '../ui'
 import { ORDER_STATUSES, OrderFilter } from './filters'
 import { ordersRoute } from './routes'
 
@@ -73,7 +73,7 @@ function OrderCard({ order }: { order: AdminOrder }) {
 
 export function OrdersPanel() {
   const { token } = useAdmin()
-  const { status = 'all', q = '' } = ordersRoute.useSearch()
+  const { status = 'all', q = '', page = 1 } = ordersRoute.useSearch()
   const navigate = ordersRoute.useNavigate()
 
   const { data, loading, error, reload } = useAdminData(
@@ -81,8 +81,9 @@ export function OrdersPanel() {
       status: status === 'all' ? undefined : status,
       search: q || undefined,
       limit: 50,
+      page,
     }),
-    [token, status, q],
+    [token, status, q, page],
   )
 
   useRegisterReload(reload)
@@ -92,7 +93,7 @@ export function OrdersPanel() {
       <div className="flex flex-wrap gap-3 mb-4">
         <SearchBox
           value={q}
-          onCommit={(next) => navigate({ search: (prev) => ({ ...prev, q: next || undefined }), replace: true })}
+          onCommit={(next) => navigate({ search: (prev) => ({ ...prev, q: next || undefined, page: undefined }), replace: true })}
           placeholder="Search ref, name, phone, address"
         />
       </div>
@@ -101,7 +102,7 @@ export function OrdersPanel() {
         <FilterRow<OrderFilter>
           options={ORDER_STATUSES}
           value={status}
-          onChange={(next) => navigate({ search: (prev) => ({ ...prev, status: next === 'all' ? undefined : next }) })}
+          onChange={(next) => navigate({ search: (prev) => ({ ...prev, status: next === 'all' ? undefined : next, page: undefined }) })}
         />
       </div>
 
@@ -116,6 +117,11 @@ export function OrdersPanel() {
         <div className="space-y-3">
           {data?.orders.map((order) => <OrderCard key={order.id} order={order} />)}
         </div>
+        <PaginationControls
+          page={page}
+          totalPages={data?.totalPages}
+          onChange={(nextPage) => navigate({ search: (prev) => ({ ...prev, page: nextPage <= 1 ? undefined : nextPage }) })}
+        />
       </PanelState>
     </>
   )

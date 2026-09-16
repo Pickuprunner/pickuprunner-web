@@ -128,6 +128,11 @@ const adminIndexRoute = createRoute({
 const text = (value: unknown) =>
   typeof value === 'string' && value.trim() ? value.trim().slice(0, 200) : undefined
 
+const page = (value: unknown): number | undefined => {
+  const parsed = Number(value)
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined
+}
+
 const oneOf = <T extends string>(options: readonly T[], value: unknown): T | undefined =>
   typeof value === 'string' && value !== 'all' && (options as readonly string[]).includes(value)
     ? (value as T)
@@ -136,9 +141,10 @@ const oneOf = <T extends string>(options: readonly T[], value: unknown): T | und
 const adminOrdersRoute = createRoute({
   getParentRoute: () => adminRoute,
   path: 'orders',
-  validateSearch: (search: Record<string, unknown>): { status?: OrderFilter; q?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { status?: OrderFilter; q?: string; page?: number } => ({
     status: oneOf(ORDER_STATUSES, search.status),
     q: text(search.q),
+    page: page(search.page),
   }),
   component: OrdersPanel,
 })
@@ -152,8 +158,9 @@ const adminOrderRoute = createRoute({
 const adminCustomersRoute = createRoute({
   getParentRoute: () => adminRoute,
   path: 'customers',
-  validateSearch: (search: Record<string, unknown>): { q?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { q?: string; page?: number } => ({
     q: text(search.q),
+    page: page(search.page),
   }),
   component: CustomersPanel,
 })
@@ -167,9 +174,10 @@ const adminCustomerRoute = createRoute({
 const adminDriversRoute = createRoute({
   getParentRoute: () => adminRoute,
   path: 'drivers',
-  validateSearch: (search: Record<string, unknown>): { q?: string; view?: DriverView } => ({
+  validateSearch: (search: Record<string, unknown>): { q?: string; view?: DriverView; page?: number } => ({
     q: text(search.q),
     view: oneOf(DRIVER_VIEWS, search.view),
+    page: page(search.page),
   }),
   component: DriversPanel,
 })
@@ -183,8 +191,9 @@ const adminDriverRoute = createRoute({
 const adminApplicationsRoute = createRoute({
   getParentRoute: () => adminRoute,
   path: 'applications',
-  validateSearch: (search: Record<string, unknown>): { status?: ApplicationFilter } => ({
+  validateSearch: (search: Record<string, unknown>): { status?: ApplicationFilter; page?: number } => ({
     status: oneOf(APPLICATION_STATUSES, search.status),
+    page: page(search.page),
   }),
   component: ApplicationsPanel,
 })

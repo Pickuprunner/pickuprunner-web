@@ -1,7 +1,3 @@
-/**
- * The admin layout: signs in, holds the session, draws the header and tabs, and
- * gives every screen below it the token and the Refresh button.
- */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Outlet } from '@tanstack/react-router'

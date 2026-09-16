@@ -4,7 +4,7 @@ import { Link } from '@tanstack/react-router'
 import toast from 'react-hot-toast'
 import { AlertCircle, Car, ChevronDown, ClipboardList, Eye, FileText, MapPin } from 'lucide-react'
 import { accreditationsApi, type Accreditation } from '../../../lib/api'
-import { Card, Detail, DocumentBadge, ExpiryChip, FilterRow, IconBubble, PanelState, RenewalBadge, StatusBadge, Total, credentials, day, matchesDerived, renewalOf, useAdmin, useAdminData, useRegisterReload } from '../ui'
+import { Card, Detail, DocumentBadge, ExpiryChip, FilterRow, IconBubble, PaginationControls, PanelState, RenewalBadge, StatusBadge, Total, credentials, day, matchesDerived, renewalOf, useAdmin, useAdminData, useRegisterReload } from '../ui'
 import { QuickCheck, approveBlockers } from '../quick-check'
 import { ReviewActions } from './ReviewActions'
 import { APPLICATION_STATUSES, ApplicationFilter, DERIVED_FILTERS, FILTER_LABELS, isDerivedFilter } from './filters'
@@ -178,7 +178,7 @@ function ApplicationCard({ application, token, onReviewed, onQuickCheck }: {
 
 export function ApplicationsPanel() {
   const { token } = useAdmin()
-  const { status = 'all' } = applicationsRoute.useSearch()
+  const { status = 'all', page = 1 } = applicationsRoute.useSearch()
   const navigate = applicationsRoute.useNavigate()
   const derived = isDerivedFilter(status)
 
@@ -186,8 +186,9 @@ export function ApplicationsPanel() {
     () => accreditationsApi.list(token, {
       status: status === 'all' || derived ? undefined : status,
       limit: 50,
+      page,
     }),
-    [token, status],
+    [token, status, page],
   )
 
   useRegisterReload(reload)
@@ -255,6 +256,11 @@ export function ApplicationsPanel() {
             />
           ))}
         </div>
+        <PaginationControls
+          page={page}
+          totalPages={derived ? undefined : data?.totalPages}
+          onChange={(nextPage) => navigate({ search: { status: status === 'all' ? undefined : status, page: nextPage <= 1 ? undefined : nextPage } })}
+        />
       </PanelState>
 
       {checking && (

@@ -131,19 +131,18 @@ export function ReviewActions({ application, token, onReviewed, name, onApprove,
                 <X size={13} />
                 Rejected
               </span>
-            ) : (
+            ) : status !== 'approved' ? (
             <button
               type="button"
               onClick={() => setRejecting(true)}
               disabled={busy !== null}
-              title={status === 'approved' ? 'Take back the approval — they stop being able to take orders' : undefined}
               className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ borderColor: 'hsl(0 84% 60% / 0.5)', color: '#EF4444' }}
             >
               <X size={13} />
               Reject
             </button>
-            )}
+            ) : null}
 
             {extra}
           </div>

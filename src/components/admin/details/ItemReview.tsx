@@ -63,51 +63,62 @@ export function ItemReview<T extends string>({ item, value, choices, rejectValue
   }
 
   const notes = [...new Set(Object.values(blocked ?? {}).filter(Boolean) as string[])]
+  const approved = value === 'approved'
 
   return (
     <div className="mt-5">
       <p className="text-[11px] font-semibold text-muted-foreground mb-2">Your decision on the {item}</p>
 
-      <div
-        role="radiogroup"
-        aria-label={`${item} decision`}
-        className="inline-flex flex-wrap gap-1 rounded-lg p-1"
-        style={{ background: 'hsl(0 0% 100% / 0.05)' }}
-      >
-        {choices.map((choice) => {
-          const current = value === choice.value
-          const why = blocked?.[choice.value]
-          return (
-            <button
-              key={choice.value}
-              type="button"
-              role="radio"
-              aria-checked={current}
-              disabled={busy !== null || Boolean(why) || (current && choice.value !== rejectValue)}
-              title={why || (current ? `Currently ${choice.label.toLowerCase()}` : undefined)}
-              onClick={() => {
-                if (choice.value === rejectValue) {
-                  setRejecting(true)
-                  setError('')
-                } else {
-                  decide(choice.value)
+      {approved ? (
+        <span
+          className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
+          style={{ background: 'hsl(142 71% 45% / 0.12)', border: '1px solid hsl(142 71% 45% / 0.4)', color: '#22C55E' }}
+        >
+          <Check size={12} />
+          Approved
+        </span>
+      ) : (
+        <div
+          role="radiogroup"
+          aria-label={`${item} decision`}
+          className="inline-flex flex-wrap gap-1 rounded-lg p-1"
+          style={{ background: 'hsl(0 0% 100% / 0.05)' }}
+        >
+          {choices.map((choice) => {
+            const current = value === choice.value
+            const why = blocked?.[choice.value]
+            return (
+              <button
+                key={choice.value}
+                type="button"
+                role="radio"
+                aria-checked={current}
+                disabled={busy !== null || Boolean(why) || (current && choice.value !== rejectValue)}
+                title={why || (current ? `Currently ${choice.label.toLowerCase()}` : undefined)}
+                onClick={() => {
+                  if (choice.value === rejectValue) {
+                    setRejecting(true)
+                    setError('')
+                  } else {
+                    decide(choice.value)
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed"
+                style={
+                  current
+                    ? { background: choice.color, color: choice.value === rejectValue ? '#fff' : '#04120A' }
+                    : { color: why ? 'hsl(var(--muted-foreground) / 0.5)' : choice.color }
                 }
-              }}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed"
-              style={
-                current
-                  ? { background: choice.color, color: choice.value === rejectValue ? '#fff' : '#04120A' }
-                  : { color: why ? 'hsl(var(--muted-foreground) / 0.5)' : choice.color }
-              }
-            >
-              {busy === choice.value ? <Loader2 size={12} className="animate-spin" /> : choice.icon}
-              {choice.label}
-            </button>
-          )
-        })}
-      </div>
+              >
+                {busy === choice.value ? <Loader2 size={12} className="animate-spin" /> : choice.icon}
+                {choice.label}
+              </button>
+            )
+          })}
+        </div>
+      )}
 
-      {rejecting && (
+      {rejecting && !approved && (
         <div className="mt-3 space-y-2">
           <label htmlFor={`reject-${item}`} className="block text-xs font-semibold text-muted-foreground">
             Why is the {item} rejected? The driver sees this.

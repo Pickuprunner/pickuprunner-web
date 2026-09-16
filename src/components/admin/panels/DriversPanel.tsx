@@ -1,18 +1,18 @@
 
 import { Banknote, Car, MapPin } from 'lucide-react'
 import { adminApi, type Accreditation } from '../../../lib/api'
-import { Avatar, CardLink, Detail, DocumentBadge, EligibilityBadge, EligibilityNote, ExpiryChip, FilterRow, PanelState, RenewalBadge, SearchBox, Stat, StatusBadge, Total, ViewHint, credentials, day, matchesDerived, money, useAdmin, useAdminData, useRegisterReload } from '../ui'
+import { Avatar, CardLink, Detail, DocumentBadge, EligibilityBadge, EligibilityNote, ExpiryChip, FilterRow, PaginationControls, PanelState, RenewalBadge, SearchBox, Stat, StatusBadge, Total, ViewHint, credentials, day, matchesDerived, money, useAdmin, useAdminData, useRegisterReload } from '../ui'
 import { DRIVER_VIEWS, DriverView, FILTER_LABELS } from './filters'
 import { driversRoute } from './routes'
 
 export function DriversPanel() {
   const { token } = useAdmin()
-  const { q = '', view = 'all' } = driversRoute.useSearch()
+  const { q = '', view = 'all', page = 1 } = driversRoute.useSearch()
   const navigate = driversRoute.useNavigate()
 
   const { data, loading, error, reload } = useAdminData(
-    () => adminApi.drivers(token, { search: q || undefined, limit: 50 }),
-    [token, q],
+    () => adminApi.drivers(token, { search: q || undefined, limit: 50, page }),
+    [token, q, page],
   )
 
   useRegisterReload(reload)
@@ -31,7 +31,7 @@ export function DriversPanel() {
       <div className="flex flex-wrap gap-3 mb-4">
         <SearchBox
           value={q}
-          onCommit={(next) => navigate({ search: { q: next || undefined, view: view === 'all' ? undefined : view }, replace: true })}
+          onCommit={(next) => navigate({ search: { q: next || undefined, view: view === 'all' ? undefined : view, page: undefined }, replace: true })}
           placeholder="Search name, email, phone"
         />
       </div>
@@ -43,7 +43,7 @@ export function DriversPanel() {
           labels={FILTER_LABELS}
           counts={counts}
           onChange={(next) =>
-            navigate({ search: { q: q || undefined, view: next === 'all' ? undefined : next } })
+            navigate({ search: { q: q || undefined, view: next === 'all' ? undefined : next, page: undefined } })
           }
         />
       </div>
@@ -132,6 +132,11 @@ export function DriversPanel() {
             )
           })}
         </div>
+        <PaginationControls
+          page={page}
+          totalPages={data?.totalPages}
+          onChange={(nextPage) => navigate({ search: { q: q || undefined, view: view === 'all' ? undefined : view, page: nextPage <= 1 ? undefined : nextPage }, replace: true })}
+        />
       </PanelState>
     </>
   )

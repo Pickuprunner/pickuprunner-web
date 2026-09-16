@@ -136,6 +136,52 @@ export function Total({ shown, total }: { shown: number; total?: number }) {
   )
 }
 
+export function PaginationControls({ page, totalPages, onChange }: {
+  page: number
+  totalPages?: number
+  onChange: (nextPage: number) => void
+}) {
+  if (!totalPages || totalPages <= 1) return null
+
+  const current = Math.min(Math.max(page, 1), totalPages)
+
+  return (
+    <div className="mt-5 flex items-center justify-between gap-3">
+      <button
+        type="button"
+        onClick={() => onChange(current - 1)}
+        disabled={current <= 1}
+        className="rounded-lg border px-3 py-2 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+        style={{
+          borderColor: 'hsl(var(--border))',
+          background: 'hsl(var(--card))',
+          color: 'hsl(var(--foreground))',
+        }}
+      >
+        Previous
+      </button>
+
+      <p className="text-xs text-muted-foreground tabular-nums">
+        Page {current} of {totalPages}
+      </p>
+
+      <button
+        type="button"
+        onClick={() => onChange(current + 1)}
+        disabled={current >= totalPages}
+        className="rounded-lg border px-3 py-2 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+        style={{
+          borderColor: 'hsl(var(--border))',
+          background: 'hsl(var(--card))',
+          color: 'hsl(var(--foreground))',
+        }}
+      >
+        Next
+      </button>
+    </div>
+  )
+}
+
 export function BackLink({ to, label }: { to: string; label: string }) {
   const router = useRouter()
   const canGoBack = useCanGoBack()

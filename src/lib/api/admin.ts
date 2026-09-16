@@ -15,13 +15,13 @@ export const adminApi = {
     request<AdminCustomerDetail>('/admin/customers/' + encodeURIComponent(id), {}, token),
   driver: (token: string, id: string) =>
     request<AdminDriverDetail>('/admin/drivers/' + encodeURIComponent(id), {}, token),
-  customers: (token: string, params: { status?: string; search?: string; limit?: number } = {}) =>
+  customers: (token: string, params: { status?: string; search?: string; limit?: number; page?: number } = {}) =>
     request<Pagination & { customers: AdminCustomer[] }>(
       '/admin/customers' + toQuery(params),
       {},
       token,
     ),
-  drivers: (token: string, params: { status?: string; search?: string; accreditationStatus?: string; limit?: number } = {}) =>
+  drivers: (token: string, params: { status?: string; search?: string; accreditationStatus?: string; limit?: number; page?: number } = {}) =>
     request<Pagination & { drivers: AdminDriver[] }>(
       '/admin/drivers' + toQuery(params),
       {},
@@ -64,11 +64,12 @@ export const driverReviewApi = {
 }
 
 export const accreditationsApi = {
-  list: (token: string, params: { status?: string; search?: string; limit?: number } = {}) => {
+  list: (token: string, params: { status?: string; search?: string; limit?: number; page?: number } = {}) => {
     const query = new URLSearchParams()
     if (params.status) query.set('status', params.status)
     if (params.search) query.set('search', params.search)
     if (params.limit) query.set('limit', String(params.limit))
+    if (params.page) query.set('page', String(params.page))
 
     const suffix = query.toString()
     return request<AccreditationPage>(
